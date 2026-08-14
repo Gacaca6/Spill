@@ -119,6 +119,27 @@ Service workers only run over HTTPS or on localhost, and registration is skipped
 
 ---
 
+## Deploying
+
+Import the repo on Vercel; `vercel.json` supplies the build and headers. Nothing else is
+needed — there is no backend and no environment variables.
+
+The cache headers in that file are load-bearing, and `vercel.json` cannot carry comments,
+so the reasoning lives here:
+
+| Path | Policy | Why |
+| --- | --- | --- |
+| `/_astro/*` | `immutable`, 1 year | Filenames are content-hashed, so they can never go stale. |
+| `/sw.js` | `must-revalidate` | **The important one.** If the worker is cached, a deploy can never reach an already-installed app — it keeps serving the old worker, which keeps serving the old precache. |
+| `/index.html`, `/manifest.webmanifest` | `must-revalidate` | The shell must be able to pick up new asset hashes. |
+| `/icons/*`, `/splash/*` | 1 week | Stable but not fingerprinted. |
+
+`Permissions-Policy` denies geolocation, camera, microphone, payment and USB outright. The
+game needs none of them, and saying so explicitly means a future dependency cannot quietly
+start asking.
+
+---
+
 ## Renaming it
 
 `APP_NAME` and `APP_TAGLINE` live in [`src/config.ts`](src/config.ts) and nowhere else. The
