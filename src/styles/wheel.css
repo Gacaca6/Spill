@@ -1,0 +1,164 @@
+/**
+ * The wheel.
+ *
+ * Deliberately not a carnival wheel: segments are hairline-divided panels on a
+ * single dark disc, and selection is expressed by one panel inverting. That
+ * reads as a precision instrument, and it sidesteps the alternating-fill problem
+ * that makes odd player counts look broken.
+ */
+
+.wheel-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  padding-block: var(--space-4);
+}
+
+.wheel {
+  position: relative;
+  width: min(86vw, 24rem, 50dvh);
+  aspect-ratio: 1;
+}
+
+.wheel__disc {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: visible;
+  /* GPU-friendly rotation for a long spin. */
+  will-change: transform;
+  transform: rotate(0deg);
+}
+
+.wheel__segment {
+  fill: var(--paper-raised);
+  stroke: var(--line);
+  stroke-width: 1;
+  transition: fill 200ms linear;
+}
+
+.wheel__segment[data-tone='b'] {
+  fill: var(--paper-high);
+}
+
+.wheel__segment[data-selected='true'] {
+  fill: var(--ink);
+}
+
+.wheel__label {
+  fill: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: fill 200ms linear, opacity 200ms linear;
+}
+
+.wheel__label[data-selected='true'] {
+  fill: var(--paper);
+}
+
+/* Names blur into illegibility on a real spinning wheel — fading them is the
+   cheap, 60fps-safe equivalent of motion blur. */
+.wheel[data-state='spinning'] .wheel__label {
+  opacity: 0.22;
+}
+
+.wheel__rim {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+
+.wheel__hub {
+  fill: var(--paper);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+
+.wheel__hub-mark {
+  fill: var(--ink);
+}
+
+/* The pointer sits above the disc and stays fixed. */
+.wheel__pointer {
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.25rem;
+  height: 1.5rem;
+  z-index: 2;
+  color: var(--ink);
+  filter: drop-shadow(0 1px 0 var(--paper));
+  transition: transform 120ms var(--ease-out);
+}
+
+.wheel[data-state='settling'] .wheel__pointer {
+  transform: translateX(-50%) translateY(2px);
+}
+
+/* Halo that tightens as the wheel comes to rest. */
+.wheel__glow {
+  position: absolute;
+  inset: -6%;
+  border-radius: 50%;
+  border: 1px solid var(--ink-ghost);
+  opacity: 0;
+  transition: opacity var(--duration-slow) linear, transform var(--duration-slow) var(--ease-out);
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.wheel[data-state='selected'] .wheel__glow {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── spin controls ─────────────────────────────────────────────────────────── */
+
+.spin-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 4rem;
+  border-radius: var(--radius-md);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--text-md);
+  font-weight: 800;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  transition: transform var(--duration-fast) var(--ease-out), opacity var(--duration-fast) linear;
+}
+
+.spin-btn:active {
+  transform: scale(0.98);
+}
+
+.spin-btn[disabled] {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.wheel-status {
+  min-height: 1.25rem;
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Very small screens: keep the wheel and the button on one screen without scroll. */
+@media (max-height: 44rem) {
+  .wheel {
+    width: min(66vw, 17rem, 40dvh);
+  }
+}

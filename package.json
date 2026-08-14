@@ -1,0 +1,24 @@
+{
+  "name": "spill",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A premium monochrome social party game. Truth or Dare, redesigned.",
+  "scripts": {
+    "icons": "node scripts/generate-icons.mjs",
+    "dev": "astro dev",
+    "build": "npm run icons && astro build",
+    "preview": "astro preview",
+    "check": "tsc --noEmit -p tsconfig.check.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run test && npm run check && npm run build"
+  },
+  "dependencies": {
+    "astro": "^7.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}

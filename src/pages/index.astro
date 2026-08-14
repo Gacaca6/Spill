@@ -1,0 +1,11 @@
+---
+import Base from '@/layouts/Base.astro';
+---
+
+<Base>
+  <script>
+    // The entire game is one client-side app; Astro provides the shell and build
+    // pipeline, and this is the only script the page ships.
+    import '@/ui/main';
+  </script>
+</Base>

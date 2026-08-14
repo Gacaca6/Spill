@@ -1,0 +1,64 @@
+---
+import { APP_NAME, APP_TAGLINE, APP_DESCRIPTION } from '@/config';
+import launchScreens from '@/pwa/launch-screens.json';
+
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+const pageTitle = title ? `${title} · ${APP_NAME}` : `${APP_NAME} — ${APP_TAGLINE}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- viewport-fit=cover lets the layout run under the iPhone notch and home indicator,
+         which the safe-area tokens then pad back out. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={APP_DESCRIPTION} />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png" />
+
+    <!-- Matches the palette in both contexts so the browser chrome never flashes.
+         The dark value is listed first so it also serves as the default. -->
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content={APP_NAME} />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="robots" content="index, follow" />
+
+    {/* iOS launch images. Without an exact match for the device, Safari shows a
+        white flash on launch, which is brutal against a pure-black app. */}
+    {launchScreens.map((entry) => (
+      <link rel="apple-touch-startup-image" href={entry.href} media={entry.media} />
+    ))}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${APP_NAME} — ${APP_TAGLINE}`} />
+    <meta property="og:description" content={APP_DESCRIPTION} />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <noscript>
+      <div style="padding: 2rem; font-family: system-ui, sans-serif;">
+        <h1 style="font-size: 1.5rem; margin-bottom: 0.5rem;">{APP_NAME} needs JavaScript</h1>
+        <p>The whole game runs on your device — no server, no account. Turn JavaScript on and it works offline too.</p>
+      </div>
+    </noscript>
+
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,168 @@
+/**
+ * Animation primitives.
+ *
+ * Motion here is functional: it carries continuity between screens and marks
+ * the beats of a turn. Nothing decorative loops forever, and every effect is
+ * neutralised under `prefers-reduced-motion`.
+ */
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+}
+
+@keyframes page-exit {
+  to {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+}
+
+@keyframes reveal-name {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+    letter-spacing: 0.08em;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    letter-spacing: var(--tracking-tight);
+  }
+}
+
+@keyframes stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.7);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes card-flip {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(24deg) translate3d(0, 24px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-7px, 0, 0); }
+  40%, 60% { transform: translate3d(7px, 0, 0); }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── applied classes ───────────────────────────────────────────────────────── */
+
+.anim-page-enter {
+  animation: page-enter var(--duration-slow) var(--ease-out) both;
+}
+
+.anim-page-exit {
+  animation: page-exit var(--duration-base) var(--ease-in-out) both;
+}
+
+.anim-rise {
+  animation: rise var(--duration-slow) var(--ease-out) both;
+}
+
+.anim-reveal-name {
+  animation: reveal-name 620ms var(--ease-out) both;
+}
+
+.anim-stamp {
+  animation: stamp 520ms var(--ease-spring) both;
+}
+
+.anim-card {
+  animation: card-flip 520ms var(--ease-out) both;
+}
+
+.anim-shake {
+  animation: shake 520ms var(--ease-in-out);
+}
+
+.anim-pulse {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+/* Staggered entrances. Set `--i` on the child to place it in the sequence. */
+.stagger > * {
+  animation: rise var(--duration-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.delay-1 { animation-delay: 90ms; }
+.delay-2 { animation-delay: 180ms; }
+.delay-3 { animation-delay: 300ms; }
+.delay-4 { animation-delay: 460ms; }
+
+/**
+ * Reduced motion.
+ *
+ * Transforms and travel are removed, but opacity fades are kept short and
+ * intact — they are what tells the player that a new thing has appeared, and
+ * removing all feedback would lose information rather than preserve it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .anim-page-enter,
+  .anim-rise,
+  .anim-reveal-name,
+  .anim-stamp,
+  .anim-card,
+  .stagger > * {
+    animation: fade-in 140ms linear both !important;
+    animation-delay: 0ms !important;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
