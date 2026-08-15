@@ -10,11 +10,11 @@ import { adultDare } from '@/data/builders';
  * picked and nobody else.
  *
  * **Partner dares** (`partner: true`) involve a second player, who the engine
- * picks and who is asked privately, before the card is ever shown to the room,
- * whether they are in. A pass is silent — the room never learns who declined,
- * so declining costs nothing socially and the dare is simply redrawn. This is
- * why these can be physical at all: the person on the receiving end chooses,
- * rather than a shuffle choosing for them.
+ * picks and who has to answer before the dare counts as happening. The room
+ * reads the card — this is one phone on a table, not a private prompt — but the
+ * person on the receiving end is the one who decides, rather than a shuffle
+ * deciding for them. A pass costs them nothing and the dare is redrawn. That is
+ * the only reason these can be physical at all.
  *
  * The ceiling on partner dares is kissing and close contact, fully clothed.
  * Nothing here instructs a sexual act, undressing, or anything a group setting

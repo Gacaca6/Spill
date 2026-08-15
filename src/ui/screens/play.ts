@@ -191,65 +191,73 @@ export function revealScreen(app: App): ScreenView {
 }
 
 /**
- * The partner consent gate.
+ * The partner check.
  *
- * Shown only for dares that physically involve a second player. The card stays
- * hidden until that player has answered, and answering no is silent: the dare is
- * swapped for one involving nobody else and the room is never told what happened
- * or who declined. A refusal that carries a social cost is not a real refusal.
+ * Shown only for dares that physically involve a second player. The whole room
+ * reads the card — this is one phone passed around a table, so pretending
+ * otherwise would be a promise the hardware cannot keep. What the screen does
+ * instead is make sure the person on the receiving end answers *before* the dare
+ * is treated as happening, rather than the wheel deciding for them.
+ *
+ * A pass costs the partner nothing. The turn keeps its stakes because the dared
+ * player still gets a replacement they can refuse into a consequence — the
+ * forfeit lands on whoever's turn it actually is.
  */
 export function consentScreen(app: App): ScreenView {
   const engine = app.requireEngine();
   const player = engine.currentPlayer;
   const partner = engine.activePartner;
+  const prompt = engine.activePrompt;
 
-  if (!player || !partner || !engine.awaitingPartner) {
+  if (!player || !partner || !prompt || !engine.awaitingPartner) {
     return { el: screen('center'), onEnter: () => void app.go('challenge', { instant: true }) };
   }
 
   const el = screen(
-    'center',
+    'between',
+    topbar({ status: [`Round ${engine.state.currentRound}`, 'Partner dare'] }),
     h(
       'div',
-      { class: 'stack stack--6' },
+      { class: 'screen__body challenge' },
+      h(
+        'article',
+        { class: 'card card--challenge anim-card' },
+        h('p', { class: 'card__label', text: `${player.name} + ${partner.name}` }),
+        h('p', { class: 'card__text', 'data-length': lengthClass(prompt.text), text: prompt.text }),
+        h('div', { class: 'card__footer' }, h('span', { text: `${partner.name} decides` })),
+      ),
       h(
         'div',
         { class: 'stack stack--3' },
-        h('p', { class: 'eyebrow', text: `${player.name} drew a partner dare` }),
-        h('h1', { class: 'display display--md', 'data-length': lengthClass(partner.name, 12), text: `${partner.name}, it's you.` }),
-        h('p', {
-          class: 'lede',
-          text: 'This one involves you physically. Nobody else sees the card until you decide, and if you pass, nobody finds out you did.',
-        }),
+        h('p', { class: 'meta', text: `${partner.name}, you're the other half of this one. Your call.` }),
+        h(
+          'div',
+          { class: 'split' },
+          button({
+            label: "I'm in",
+            variant: 'primary',
+            onPress: () => {
+              engine.acceptPartner();
+              app.persist();
+              void app.go('challenge', { instant: true });
+            },
+          }),
+          button({
+            label: 'Pass',
+            variant: 'secondary',
+            onPress: () => {
+              engine.declinePartner();
+              app.persist();
+              app.toast(`${player.name} draws again`);
+              void app.go('challenge', { instant: true });
+            },
+          }),
+        ),
       ),
-      h(
-        'div',
-        { class: 'split' },
-        button({
-          label: "I'm in",
-          variant: 'primary',
-          onPress: () => {
-            engine.acceptPartner();
-            app.persist();
-            void app.go('challenge', { instant: true });
-          },
-        }),
-        button({
-          label: 'Pass',
-          variant: 'secondary',
-          onPress: () => {
-            engine.declinePartner();
-            app.persist();
-            // No toast, no announcement — a silent swap is the entire point.
-            void app.go('challenge', { instant: true });
-          },
-        }),
-      ),
-      h('p', { class: 'meta', text: 'Pass the phone over. No explanation needed either way.' }),
     ),
   );
 
-  return { el, announce: `${partner.name}, you have been picked for a partner dare. Are you in?` };
+  return { el, announce: `${partner.name}, you have been picked for a partner dare with ${player.name}. Are you in?` };
 }
 
 /** The challenge card. */

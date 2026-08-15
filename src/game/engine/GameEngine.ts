@@ -261,9 +261,11 @@ export class GameEngine {
   /**
    * The partner passes.
    *
-   * The dare is silently replaced with one that involves nobody else, so the
-   * room never learns who declined or what the original card said. Saying no
-   * has to cost nothing, or it is not really a choice.
+   * The dare is replaced with one that involves nobody else, and the partner
+   * pays nothing for it. The turn keeps its stakes because the replacement is
+   * still a dare the *dared* player can refuse into a consequence — the forfeit
+   * belongs to whoever's turn it is, not to the person who was assigned to be
+   * touched by a shuffle.
    */
   declinePartner(): Prompt | null {
     const turn = this.data.activeTurn;

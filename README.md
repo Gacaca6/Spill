@@ -198,13 +198,20 @@ A small set of adult dares physically involve a second player. These are the onl
 the library that do, and they are handled differently:
 
 1. The engine picks a partner and marks the turn `awaitingPartner`.
-2. The card stays **hidden** while a consent screen asks that player privately.
-3. **"I'm in"** reveals the card. **"Pass"** silently swaps the dare for one involving nobody
-   else — no toast, no announcement, and the replacement card names no partner.
+2. The card is shown to the room with **the partner named as the one who decides**.
+3. **"I'm in"** proceeds. **"Pass"** redraws a dare involving nobody else.
 
-A refusal that carries a social cost is not a refusal, so declining is invisible and free.
+This is one phone passed around a table, so the card is not private and the app does not
+pretend it is. What the step actually buys is that the person on the receiving end answers
+before the dare counts as happening, instead of a shuffle deciding for them.
+
+**A pass costs the partner nothing.** The turn still has stakes: the dared player gets a
+replacement they can refuse into a consequence, so the forfeit lands on whoever's turn it
+actually is — not on the person who was assigned to be touched. Penalising that refusal is
+the one change that would turn this from a party game into pressure.
+
 The tests enforce that partner dares never reach a general mode, never reach a two-player
-game, and that any dare using contact language is flagged so it cannot skip the gate.
+game, and that any dare using contact language is flagged so it cannot skip the step.
 
 The ceiling is kissing and close contact, fully clothed. Nothing instructs undressing or a
 sexual act, and that is asserted in the test suite for dares *and* consequences — including
