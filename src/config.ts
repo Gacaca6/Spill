@@ -10,8 +10,11 @@ export const APP_TAGLINE = 'Truth or dare, but make it personal.';
 export const APP_DESCRIPTION =
   'A party game for people in the same room. Spin, get picked, tell the truth or take the dare. No accounts, no internet, no mercy.';
 
-/** Bumping this invalidates any saved session that no longer matches the schema. */
-export const STATE_VERSION = 1;
+/**
+ * Bumping this invalidates any saved session that no longer matches the schema.
+ * v2 replaced the shuffled turn queue with weighted selection.
+ */
+export const STATE_VERSION = 2;
 
 export const STORAGE_KEYS = {
   session: 'spill:session:v1',

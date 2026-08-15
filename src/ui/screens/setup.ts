@@ -329,7 +329,7 @@ export function introScreen(app: App): ScreenView {
   const mode = engine ? MODES[engine.state.mode] : null;
 
   const rules: Array<[string, string]> = [
-    ['01', 'Nobody gets picked twice before everyone plays.'],
+    ['01', 'The wheel picks. Nobody can call it.'],
     ['02', 'Truth or dare is assigned. You never know which.'],
     ['03', 'You can always say nope.'],
     ['04', 'But nope has consequences.'],

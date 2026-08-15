@@ -18,30 +18,32 @@ function engineWith(names: string[], seed = 7) {
 }
 
 describe('peekNextPlayer', () => {
-  it('does not consume the turn', () => {
+  it('does not consume the turn, and is stable once decided', () => {
     const engine = engineWith(['A', 'B', 'C']);
-    const before = [...engine.state.turnQueue];
 
     const peeked = engine.peekNextPlayer();
-    expect(engine.state.turnQueue).toEqual(before);
+    expect(engine.state.currentPlayerId).toBeNull();
+    // Peeking repeatedly must not re-roll — the wheel is already spinning
+    // toward this answer.
+    expect(engine.peekNextPlayer().id).toBe(peeked.id);
     expect(engine.peekNextPlayer().id).toBe(peeked.id);
 
     // The player the wheel promised is the player the engine actually gives.
     expect(engine.nextPlayer().id).toBe(peeked.id);
-    expect(engine.state.turnQueue).toHaveLength(before.length - 1);
+    expect(engine.state.pendingPlayerId).toBeNull();
   });
 
-  it('does not advance the round twice when it refills the queue', () => {
+  it('advances the round once per rotation of turns', () => {
     const engine = engineWith(['A', 'B']);
+    expect(engine.nextPlayer() && engine.state.currentRound).toBe(1);
+
     for (let i = 0; i < 2; i++) {
-      const player = engine.nextPlayer();
+      const player = engine.currentPlayer ?? engine.nextPlayer();
       engine.beginTurn(player.id);
       engine.completeTurn();
     }
 
-    expect(engine.state.currentRound).toBe(1);
-    engine.peekNextPlayer();
-    engine.peekNextPlayer();
+    engine.nextPlayer();
     expect(engine.state.currentRound).toBe(2);
   });
 });

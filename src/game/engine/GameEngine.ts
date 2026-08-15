@@ -12,7 +12,7 @@ import type {
 } from '@/types';
 import { ALL_CONSEQUENCES, ADULT_PROMPTS, GENERAL_PROMPTS, getConsequence, getPrompt } from '@/data';
 import { MODES } from '@/data/categories/modes';
-import { buildTurnQueue } from '@/game/algorithms/queue';
+import { selectNextPlayer } from '@/game/algorithms/queue';
 import { intensityBandForRound } from '@/game/algorithms/intensity';
 import { selectConsequence, selectPrompt } from '@/game/algorithms/selection';
 import { STATE_VERSION, LIMITS } from '@/config';
@@ -85,10 +85,7 @@ export class GameEngine {
       players,
       currentRound: 1,
       currentPlayerId: null,
-      turnQueue: buildTurnQueue(
-        players.map((player) => player.id),
-        rng,
-      ),
+      pendingPlayerId: null,
       history: [],
       mode: config.mode,
       ageRating: mode.ageRating,
@@ -148,47 +145,44 @@ export class GameEngine {
 
   // ── turn lifecycle ─────────────────────────────────────────────────────────
 
-  private refillIfNeeded(): void {
-    if (this.data.turnQueue.length > 0) return;
-
-    this.data.currentRound += 1;
-    this.data.turnQueue = buildTurnQueue(
-      this.data.players.map((player) => player.id),
-      this.rng,
-      this.data.lastPlayerId,
-    );
-  }
-
   /**
    * Who the wheel must land on, without consuming the turn.
    *
-   * The wheel needs the answer before the animation starts, but a refresh
-   * mid-spin must not cost anybody their turn — so the queue is only drained
-   * once the spin has actually finished.
+   * The choice is made here, before the spin animation starts, and parked on
+   * the state. That does two things: the wheel and the engine can never
+   * disagree about where it lands, and a refresh mid-spin resumes the same
+   * answer instead of quietly re-rolling somebody's turn away.
    */
   peekNextPlayer(): Player {
-    this.refillIfNeeded();
-    const nextId = this.data.turnQueue[0];
-    const player = nextId ? this.getPlayer(nextId) : undefined;
-    if (!player) throw new Error('Turn queue is empty and could not be refilled.');
+    const existing = this.data.pendingPlayerId ? this.getPlayer(this.data.pendingPlayerId) : null;
+    if (existing) return existing;
+
+    const chosen = selectNextPlayer(
+      this.data.players.map((player) => ({ id: player.id, lastTurnIndex: player.lastTurnIndex })),
+      this.data.history.length,
+      this.data.lastPlayerId,
+      this.rng,
+    );
+
+    const player = chosen ? this.getPlayer(chosen) : null;
+    if (!player) throw new Error('No players are available to take a turn.');
+
+    this.data.pendingPlayerId = player.id;
+    this.touch();
     return player;
   }
 
-  /**
-   * Selects the next player. The queue is drained one player at a time and only
-   * refilled once empty, which is what makes repeat picks impossible.
-   */
+  /** Commits the pending selection and opens their turn. */
   nextPlayer(): Player {
-    this.refillIfNeeded();
+    const player = this.peekNextPlayer();
 
-    const nextId = this.data.turnQueue.shift();
-    if (!nextId) throw new Error('Turn queue is empty and could not be refilled.');
-
-    this.data.currentPlayerId = nextId;
+    this.data.pendingPlayerId = null;
+    this.data.currentPlayerId = player.id;
+    // A round is simply a rotation's worth of turns, which keeps the intensity
+    // ladder climbing at the same rate the queue used to give it.
+    this.data.currentRound = Math.floor(this.data.history.length / Math.max(1, this.data.players.length)) + 1;
     this.touch();
 
-    const player = this.getPlayer(nextId);
-    if (!player) throw new Error('Selected player is no longer in the game.');
     return player;
   }
 
@@ -425,6 +419,9 @@ export class GameEngine {
 
     if (player) {
       player.turnsPlayed += 1;
+      // Recorded before the turn is pushed, so it is the index this turn will
+      // occupy — which is what the waiting-time weighting measures against.
+      player.lastTurnIndex = this.data.history.length;
       // Streak first — it is measured against the *previous* type, which the
       // next line is about to overwrite.
       player.sameTypeStreak = player.lastChallengeType === turn.type ? player.sameTypeStreak + 1 : 1;
@@ -511,7 +508,7 @@ export class GameEngine {
     if (this.data.players.length <= LIMITS.minPlayers) return false;
 
     this.data.players = this.data.players.filter((player) => player.id !== playerId);
-    this.data.turnQueue = this.data.turnQueue.filter((id) => id !== playerId);
+    if (this.data.pendingPlayerId === playerId) this.data.pendingPlayerId = null;
     if (this.data.currentPlayerId === playerId) this.data.currentPlayerId = null;
     if (this.data.lastPlayerId === playerId) this.data.lastPlayerId = null;
     if (this.data.activeTurn?.playerId === playerId) this.data.activeTurn = null;
@@ -547,6 +544,7 @@ function createPlayer(id: string, name: string): Player {
     capVotes: 0,
     lastChallengeType: null,
     sameTypeStreak: 0,
+    lastTurnIndex: -1,
     chaosScore: 0,
     pendingIntensityBoost: 0,
   };
@@ -561,7 +559,6 @@ function isUsableState(state: unknown): state is GameState {
     candidate.version === STATE_VERSION &&
     Array.isArray(candidate.players) &&
     candidate.players.length >= LIMITS.minPlayers &&
-    Array.isArray(candidate.turnQueue) &&
     Array.isArray(candidate.history) &&
     typeof candidate.gameId === 'string' &&
     typeof candidate.mode === 'string' &&

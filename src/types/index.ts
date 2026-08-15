@@ -77,6 +77,8 @@ export interface Player {
   lastChallengeType: ChallengeType | null;
   /** How many times in a row this player has had `lastChallengeType`. */
   sameTypeStreak: number;
+  /** History index of this player's last turn; -1 if they have not had one. */
+  lastTurnIndex: number;
   chaosScore: number;
   /** Set by Double Down — raises the intensity band for this player's next turn only. */
   pendingIntensityBoost: number;
@@ -133,8 +135,12 @@ export interface GameState {
   players: Player[];
   currentRound: number;
   currentPlayerId: string | null;
-  /** Remaining players in the current round, in play order. */
-  turnQueue: string[];
+  /**
+   * Who the wheel is about to land on, decided before the spin animation starts
+   * so the two can never disagree — and held in state so a refresh mid-spin
+   * does not silently re-roll it.
+   */
+  pendingPlayerId: string | null;
   history: TurnRecord[];
   mode: GameMode;
   ageRating: AgeRating;

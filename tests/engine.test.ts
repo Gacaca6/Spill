@@ -24,24 +24,8 @@ function playTurns(engine: GameEngine, turns: number) {
   }
 }
 
-describe('player selection fairness', () => {
-  it('never picks the same player twice before everyone else has played', () => {
-    for (let seed = 1; seed <= 40; seed++) {
-      const engine = makeEngine(['Alex', 'Sarah', 'Mike', 'Emma', 'John'], 'chaos', seed);
-      playTurns(engine, 50);
-
-      const order = engine.state.history.map((turn) => turn.playerId);
-      const playerCount = engine.state.players.length;
-
-      // Every window of N consecutive turns must contain N distinct players.
-      for (let start = 0; start + playerCount <= order.length; start += playerCount) {
-        const window = order.slice(start, start + playerCount);
-        expect(new Set(window).size).toBe(playerCount);
-      }
-    }
-  });
-
-  it('never picks the same player on two consecutive turns, including across rounds', () => {
+describe('player selection', () => {
+  it('never picks the same player on two consecutive turns', () => {
     for (let seed = 1; seed <= 40; seed++) {
       const engine = makeEngine(['A', 'B', 'C', 'D'], 'chaos', seed);
       playTurns(engine, 60);
@@ -53,17 +37,70 @@ describe('player selection fairness', () => {
     }
   });
 
-  it('generates a new shuffled queue once every player has played', () => {
-    const engine = makeEngine(['A', 'B', 'C', 'D']);
-    expect(engine.state.turnQueue).toHaveLength(4);
+  it('is not deducible from who has already gone', () => {
+    /**
+     * The reason the queue was dropped. Draining a shuffled queue meant that
+     * once every player but one had gone, the last was certain — the final spin
+     * of every round was a formality. This asserts the opposite: across many
+     * games there are windows where everyone bar one has just played and the
+     * wheel lands on somebody who already has.
+     */
+    let surprises = 0;
 
-    playTurns(engine, 4);
-    expect(engine.state.turnQueue).toHaveLength(0);
-    expect(engine.state.currentRound).toBe(1);
+    for (let seed = 1; seed <= 60; seed++) {
+      const engine = makeEngine(['A', 'B', 'C', 'D'], 'chaos', seed);
+      playTurns(engine, 60);
 
-    engine.nextPlayer();
-    expect(engine.state.currentRound).toBe(2);
-    expect(engine.state.turnQueue).toHaveLength(3);
+      const order = engine.state.history.map((turn) => turn.playerId);
+      const count = engine.state.players.length;
+
+      for (let i = count - 1; i < order.length; i++) {
+        const previous = order.slice(i - (count - 1), i);
+        if (new Set(previous).size !== count - 1) continue;
+        // Exactly one player sat out that window. A queue would force them next.
+        const missing = engine.state.players.find((player) => !previous.includes(player.id));
+        if (missing && order[i] !== missing.id) surprises++;
+      }
+    }
+
+    expect(surprises).toBeGreaterThan(0);
+  });
+
+  it('still gives everyone a fair share of the night', () => {
+    const names = ['A', 'B', 'C', 'D', 'E'];
+    const engine = makeEngine(names, 'chaos', 5);
+    playTurns(engine, 500);
+
+    const counts = new Map<string, number>();
+    for (const turn of engine.state.history) counts.set(turn.playerId, (counts.get(turn.playerId) ?? 0) + 1);
+
+    const expected = 500 / names.length;
+    for (const player of engine.state.players) {
+      const share = counts.get(player.id) ?? 0;
+      // Weighted selection is not a queue, so allow drift — but not much.
+      expect(share).toBeGreaterThan(expected * 0.8);
+      expect(share).toBeLessThan(expected * 1.2);
+    }
+  });
+
+  it('never leaves anyone waiting more than two rotations', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      const names = ['A', 'B', 'C', 'D', 'E'];
+      const engine = makeEngine(names, 'chaos', seed);
+      playTurns(engine, 200);
+
+      const order = engine.state.history.map((turn) => turn.playerId);
+      const lastSeen = new Map<string, number>();
+      names.forEach((_, index) => lastSeen.set(engine.state.players[index]!.id, -1));
+
+      order.forEach((id, index) => {
+        for (const [playerId, seen] of lastSeen) {
+          if (playerId === id) continue;
+          expect(index - seen, 'gap between turns').toBeLessThanOrEqual(names.length * 2 + 1);
+        }
+        lastSeen.set(id, index);
+      });
+    }
   });
 
   it('works with the minimum group of two', () => {
@@ -77,13 +114,22 @@ describe('player selection fairness', () => {
   it('works with a large group', () => {
     const names = Array.from({ length: 12 }, (_, i) => `Player ${i + 1}`);
     const engine = makeEngine(names);
-    playTurns(engine, 36);
+    playTurns(engine, 120);
 
     const counts = new Map<string, number>();
     for (const turn of engine.state.history) counts.set(turn.playerId, (counts.get(turn.playerId) ?? 0) + 1);
 
-    // Three complete rounds means everybody has played exactly three times.
-    expect([...counts.values()].every((count) => count === 3)).toBe(true);
+    expect(counts.size).toBe(names.length);
+    for (const count of counts.values()) expect(count).toBeGreaterThan(4);
+  });
+
+  it('holds the pending pick across a refresh instead of re-rolling it', () => {
+    const engine = makeEngine(['A', 'B', 'C', 'D']);
+    const peeked = engine.peekNextPlayer();
+
+    const resumed = GameEngine.resume(engine.snapshot());
+    expect(resumed!.peekNextPlayer().id).toBe(peeked.id);
+    expect(resumed!.nextPlayer().id).toBe(peeked.id);
   });
 });
 
@@ -395,13 +441,20 @@ describe('state integrity', () => {
     expect(GameEngine.resume(broken as never)).toBeNull();
   });
 
-  it('drops a removed player from the pending queue', () => {
+  it('never selects a removed player again', () => {
     const engine = makeEngine(['A', 'B', 'C', 'D']);
     const victim = engine.state.players[2]!.id;
 
+    // Force them to be the pending pick, so removal has something to clear.
+    engine.state.players.forEach((player) => {
+      if (player.id !== victim) player.lastTurnIndex = 0;
+    });
+    engine.peekNextPlayer();
+
     expect(engine.removePlayer(victim)).toBe(true);
-    expect(engine.state.turnQueue).not.toContain(victim);
-    playTurns(engine, 12);
+    expect(engine.state.pendingPlayerId).not.toBe(victim);
+
+    playTurns(engine, 24);
     expect(engine.state.history.some((turn) => turn.playerId === victim)).toBe(false);
   });
 
