@@ -74,7 +74,11 @@ export function validateContent(): ContentIssue[] {
     if (existing) issues.push({ id: prompt.id, problem: `duplicate wording with ${existing}` });
     else normalized.set(key, prompt.id);
 
-    words.set(prompt.id, new Set(key.split(' ').filter((word) => word.length > 3)));
+    // Every word counts, including the short ones. Filtering by length looks
+    // like a sensible stopword proxy and is not: it throws away "sex", "ex",
+    // "act" and "bed", which are the words actually distinguishing one adult
+    // prompt from another, and makes unrelated questions look identical.
+    words.set(prompt.id, new Set(key.split(' ').filter(Boolean)));
   }
 
   /**
@@ -83,22 +87,23 @@ export function validateContent(): ContentIssue[] {
    * Exact matching misses the ones that actually happen — "your honest opinion
    * on grand romantic gestures" against "your honest, unfiltered opinion on
    * grand romantic gestures" is a repeat to a player and identical to nobody.
-   * Comparing significant-word overlap catches those, and 0.8 is high enough
-   * that genuinely different prompts sharing a phrasing pattern stay clear.
+   * Comparing word overlap catches those. 0.85 is high enough that questions
+   * sharing a "have you ever" scaffold but asking different things — a friend's
+   * partner against a friend's ex — stay clear of each other.
    */
   const entries = [...words.entries()];
   for (let i = 0; i < entries.length; i++) {
     const [idA, setA] = entries[i] as [string, Set<string>];
-    if (setA.size < 4) continue;
+    if (setA.size < 5) continue;
 
     for (let j = i + 1; j < entries.length; j++) {
       const [idB, setB] = entries[j] as [string, Set<string>];
-      if (setB.size < 4) continue;
+      if (setB.size < 5) continue;
 
       let shared = 0;
       for (const word of setA) if (setB.has(word)) shared++;
       const union = setA.size + setB.size - shared;
-      if (union > 0 && shared / union >= 0.8) {
+      if (union > 0 && shared / union >= 0.85) {
         issues.push({ id: idB, problem: `near-duplicate of ${idA}` });
       }
     }

@@ -230,51 +230,97 @@ export function modeScreen(app: App): ScreenView {
  * pretending otherwise with a date picker would only teach people to lie.
  */
 export function ageGateScreen(app: App): ScreenView {
+  /**
+   * Three separate acknowledgements, each a deliberate tap.
+   *
+   * A single "I am 18+" button is one reflex away from being meaningless. This
+   * cannot verify anybody's age — no local PWA can — so the honest way to make
+   * the gate mean something is to make it slow, specific about what is actually
+   * in the deck, and unambiguous that it is being answered on behalf of the
+   * whole room rather than just the person holding the phone.
+   */
+  const checks = [
+    { id: 'age', text: 'Everyone playing is 18 or older.' },
+    { id: 'content', text: 'We know this deck is explicit — sex, kinks, and dares that involve kissing.' },
+    { id: 'consent', text: 'Anyone can pass on anything, at any time, with no explanation.' },
+  ];
+
+  const accepted = new Set<string>();
+  const continueButton = button({
+    label: 'Everyone agrees. Let us in.',
+    variant: 'primary',
+    size: 'lg',
+    onPress: () => {
+      if (accepted.size < checks.length) return;
+      try {
+        app.startGame('18plus');
+        void app.go('intro');
+      } catch (error) {
+        app.fail(error);
+      }
+    },
+  });
+  continueButton.setAttribute('disabled', '');
+
+  const rows = checks.map((check) => {
+    const row = h(
+      'button',
+      { class: 'check', type: 'button', role: 'checkbox', 'aria-checked': 'false' },
+      h('span', { class: 'check__box', 'aria-hidden': 'true' }),
+      h('span', { class: 'check__text', text: check.text }),
+    );
+
+    row.addEventListener('click', () => {
+      const on = !accepted.has(check.id);
+      if (on) accepted.add(check.id);
+      else accepted.delete(check.id);
+
+      row.setAttribute('aria-checked', String(on));
+      continueButton.toggleAttribute('disabled', accepted.size < checks.length);
+    });
+
+    return row;
+  });
+
   const el = screen(
-    'center',
+    'between',
+    topbar({ back: { label: 'Modes', onPress: () => void app.go('mode') }, status: ['18+'] }),
     h(
       'div',
-      { class: 'agegate' },
+      { class: 'screen__body agegate' },
       h('p', { class: 'agegate__mark', text: '18+' }),
       h('h1', { class: 'display display--sm', text: 'Adults only' }),
       h('p', {
         class: 'lede',
-        text: 'This mode contains adult-oriented questions and challenges — flirtation, dating and adult humour. Nothing in it is compulsory, and anyone can skip anything.',
+        text: 'This deck is explicit. Tick all three — one person answering for a room that has not agreed is how this goes wrong.',
       }),
+      h('div', { class: 'stack stack--2' }, ...rows),
       h('p', {
         class: 'meta',
-        text: "We can't verify your age. This is you telling us the truth.",
+        text: 'We cannot verify anyone\'s age, and we are not pretending to. This is you telling us the truth.',
       }),
-      h(
-        'div',
-        { class: 'stack stack--3' },
-        button({
-          label: 'I am 18 or older',
-          variant: 'primary',
-          size: 'lg',
-          onPress: () => {
-            try {
-              app.startGame('18plus');
-              void app.go('intro');
-            } catch (error) {
-              app.fail(error);
-            }
-          },
-        }),
-        button({
-          label: 'I am under 18',
-          variant: 'secondary',
-          onPress: () => {
-            app.draft.mode = null;
-            app.toast('Back to the general modes');
-            void app.go('mode');
-          },
-        }),
-      ),
+    ),
+    h(
+      'div',
+      { class: 'screen__actions' },
+      continueButton,
+      button({
+        label: 'Not for us',
+        variant: 'quiet',
+        onPress: () => {
+          app.draft.mode = null;
+          app.toast('Back to the general modes');
+          void app.go('mode');
+        },
+      }),
     ),
   );
 
-  return { el, announce: 'Adult mode. You must be 18 or older to continue.' };
+  return {
+    el,
+    announce: 'Adult mode. Confirm all three statements to continue.',
+    focus: () => rows[0] ?? null,
+  };
 }
 
 /** The rules, stated once, right before the first spin. */

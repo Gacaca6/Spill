@@ -565,6 +565,52 @@
   color: var(--ink-faint);
 }
 
+/* ── checkbox row ──────────────────────────────────────────────────────────── */
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--ink-dim);
+  transition: border-color var(--duration-fast), color var(--duration-fast);
+}
+
+.check[aria-checked='true'] {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.check__box {
+  position: relative;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 1px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius-xs);
+}
+
+/* A drawn tick rather than a glyph, so it matches at any weight. */
+.check[aria-checked='true'] .check__box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 3px var(--paper);
+}
+
+.check__text {
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
 /* ── notice ────────────────────────────────────────────────────────────────── */
 
 .notice {

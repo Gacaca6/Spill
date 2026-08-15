@@ -68,9 +68,15 @@ describe('content safety', () => {
     /\bpassword/i,
     /\bpasscode\b/i,
     /\bpin (?:code|number)\b/i,
-    /\bnude/i,
-    /\bnaked\b/i,
-    /send (?:a |an )?(?:photo|picture|pic|image) of/i,
+    // Creating or requesting an intimate image is banned everywhere and in every
+    // phrasing. Images outlive the night, leave the room, and are the main
+    // vector for image-based abuse — an opt-in tap cannot make that safe.
+    /send (?:a |an )?(?:photo|picture|pic|image|selfie)/i,
+    /take (?:a |an )?(?:photo|picture|pic|selfie|video)/i,
+    /\brecord (?:yourself|your|them|a video)/i,
+    /\bfilm (?:yourself|your|them)\b/i,
+    /\bsex tape\b/i,
+    /\bphoto ?shoot\b/i,
     /\bstalk/i,
     /\bblackmail/i,
     /\bdox/i,
@@ -101,6 +107,12 @@ describe('content safety', () => {
     new RegExp(`\\bkiss ${TARGET}\\b`, 'i'),
     new RegExp(`\\btouch ${TARGET}\\b`, 'i'),
     new RegExp(`\\bsit on ${TARGET}\\b`, 'i'),
+    // A truth may ask whether someone has ever skinny-dipped. An instruction to
+    // get undressed in a room of friends is a different thing entirely.
+    /\bnude\b/i,
+    /\bnaked\b/i,
+    /\bskinny.?dip/i,
+    /\btopless\b/i,
     /\blick\b/i,
     /\bmassage\b/i,
     /\bhold (?:your|their) hand\b/i,
