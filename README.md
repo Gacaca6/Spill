@@ -179,9 +179,33 @@ mark.
 
 ## Content
 
-Roughly 180 truths, 165 dares, 100 consequences and a separate deck of ~95 adult prompts.
-Every entry carries metadata (category, intensity 1–5, age rating, group size, whether it
-needs another person) which is what the selector filters on.
+**1,285 prompts**: 430 general truths, 340 general dares, 135 consequences, and a separate
+adult deck of 250 truths and 130 dares. Every entry carries metadata (category, intensity
+1–5, age rating, group size, whether it needs another person) which is what the selector
+filters on.
+
+The decks are written against research rather than intuition — see
+[docs/content-research.md](docs/content-research.md) for the findings and the design rules
+they produce. The short version: Gen Z overwhelmingly wants the deeper question and won't ask
+it first, so the game's job is to be the one who asked.
 
 Adding prompts means adding a line to a file in `src/data/`. The builders in
 `src/data/builders.ts` supply the defaults; `npm test` validates the result.
+
+### Partner dares
+
+A small set of adult dares physically involve a second player. These are the only prompts in
+the library that do, and they are handled differently:
+
+1. The engine picks a partner and marks the turn `awaitingPartner`.
+2. The card stays **hidden** while a consent screen asks that player privately.
+3. **"I'm in"** reveals the card. **"Pass"** silently swaps the dare for one involving nobody
+   else — no toast, no announcement, and the replacement card names no partner.
+
+A refusal that carries a social cost is not a refusal, so declining is invisible and free.
+The tests enforce that partner dares never reach a general mode, never reach a two-player
+game, and that any dare using contact language is flagged so it cannot skip the gate.
+
+The ceiling is kissing and close contact, fully clothed. Nothing instructs undressing or a
+sexual act, and that is asserted in the test suite for dares *and* consequences — including
+the ones behind the consent gate.

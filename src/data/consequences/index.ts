@@ -3,9 +3,14 @@ import { consequence } from '@/data/builders';
 /**
  * Consequences for refusing a challenge.
  *
- * Design rule: a consequence is a joke, not a punishment. Nothing here is
- * dangerous, sexual, degrading or coercive — refusing has to stay a genuinely
- * available option, so the cost is always comedic.
+ * Design rule: a consequence is a joke, not a punishment. Refusing has to stay a
+ * genuinely available option, so the cost is always comedic or confessional —
+ * never dangerous, sexual, degrading or coercive.
+ *
+ * The 18+ set at the bottom is bolder and more revealing in tone to match the
+ * deck it belongs to. It is deliberately *not* harsher in pressure: a
+ * consequence that punishes someone for refusing an adult dare would turn the
+ * refusal mechanic into leverage, which is the exact thing it exists to prevent.
  */
 export const consequences = [
   consequence('c-001', 'Give everyone here a dramatic compliment. Full award-show energy.', 1, { playerMode: 'group', minPlayers: 3 }),
@@ -15,7 +20,7 @@ export const consequences = [
   consequence('c-005', 'Let the group choose your nickname for the next two rounds.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-006', 'Let the group ask you one harmless yes-or-no question.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-007', 'Do an impression of someone here until they guess it is them.', 2, { minPlayers: 3 }),
-  consequence('c-008', 'Talk in an accent of the group\'s choosing until your next turn.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-008', 'Talk in an accent of the group choosing until your next turn.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-009', 'Give a 20-second speech on why you are, in fact, extremely brave.', 1),
   consequence('c-010', 'Sing your answer to the next question you are asked.', 2),
   consequence('c-011', 'Narrate everything you do out loud until your next turn.', 2),
@@ -41,7 +46,7 @@ export const consequences = [
   consequence('c-031', 'Do a full dramatic gasp every time someone else answers, until your next turn.', 2),
   consequence('c-032', 'Explain your refusal as if you are a lawyer defending a client.', 2),
   consequence('c-033', 'Speak in slow motion until your next turn.', 2),
-  consequence('c-034', 'Give the group a 15-second tour of this room like a real estate agent.', 2, { physical: true, playerMode: 'group' }),
+  consequence('c-034', 'Give the group a 15-second tour of this room like an estate agent.', 2, { physical: true, playerMode: 'group' }),
   consequence('c-035', 'Let the group decide one harmless thing you must do before your next turn.', 3, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-036', 'Sing the alphabet in the style of a heartbreak ballad.', 2),
   consequence('c-037', 'Do an impression of the person who invited you here tonight.', 2, { minPlayers: 3 }),
@@ -52,7 +57,7 @@ export const consequences = [
   consequence('c-042', 'Speak exclusively in questions until your next turn.', 3),
   consequence('c-043', 'Give a TED Talk title for the rest of your life and explain it.', 1),
   consequence('c-044', 'Do your best evil laugh, then explain what you are planning.', 1),
-  consequence('c-045', 'Let the group rename the game for tonight, and you must use that name every time.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-045', 'Let the group rename the game for tonight, and use that name every time.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-046', 'Introduce yourself to the group as if nobody here has ever met you.', 1, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-047', 'Say something nice about the last person who annoyed you.', 2),
   consequence('c-048', 'Give a dramatic monologue about the hardest thing you did today.', 1),
@@ -60,13 +65,13 @@ export const consequences = [
   consequence('c-050', 'Let the group choose an emotion you must perform for 15 seconds.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-051', 'Rank the last three things you refused to do in your life by cowardice.', 2),
   consequence('c-052', 'Give everyone a piece of advice they absolutely did not ask for.', 2, { playerMode: 'group', minPlayers: 3 }),
-  consequence('c-053', 'Talk about yourself in the style of a nature documentary until your next turn.', 3),
+  consequence('c-053', 'Talk about yourself as a nature documentary until your next turn.', 3),
   consequence('c-054', 'Do a dramatic reenactment of the moment you decided to say no.', 2),
   consequence('c-055', 'Give a sincere compliment to the person who is winning tonight.', 2, { minPlayers: 3 }),
   consequence('c-056', 'Perform your own theme song. Ten seconds minimum.', 2),
   consequence('c-057', 'Explain, seriously, what you are actually afraid of in that challenge.', 3),
   consequence('c-058', 'Let the group ask you one question about your day. Answer honestly.', 1, { playerMode: 'group', minPlayers: 3 }),
-  consequence('c-059', 'Do your best impression of the group\'s reaction just now.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-059', 'Do your best impression of the group reaction just now.', 2, { playerMode: 'group', minPlayers: 3 }),
   consequence('c-060', 'Say your own name in five completely different emotional tones.', 2),
   consequence('c-061', 'Give a 20-second lecture on why running away is a valid life strategy.', 2),
   consequence('c-062', 'Pretend to take a phone call about how badly this is going.', 2),
@@ -96,10 +101,30 @@ export const consequences = [
   consequence('c-086', 'Give the group a two-sentence horror story about your own life.', 2),
   consequence('c-087', 'Perform the most unconvincing lie you can think of.', 1),
   consequence('c-088', 'Do a dramatic runway walk to nowhere and back.', 2, { physical: true }),
-  consequence('c-089', 'Give a serious answer to the question: what would it take to make you say yes?', 3),
+  consequence('c-089', 'Give a serious answer: what would it take to make you say yes?', 3),
   consequence('c-090', 'Let the group decide your entrance music and hum it every turn.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-091', 'Give a live review of your own performance tonight, out of ten.', 2),
+  consequence('c-092', 'Do an impression of the person here who is enjoying this most.', 2, { minPlayers: 3 }),
+  consequence('c-093', 'Explain why you are actually the bravest person in this room.', 2, { playerMode: 'group' }),
+  consequence('c-094', 'Let the group choose a topic you must bring up in every answer.', 3, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-095', 'Deliver the news of your own refusal as a breaking headline.', 2),
+  consequence('c-096', 'Tell the group the closest you have come to doing something like that.', 3),
+  consequence('c-097', 'Do the most dramatic possible high five with the person next to you.', 1, { physical: true, minPlayers: 3 }),
+  consequence('c-098', 'Give a 20-second speech in defence of everyone who has ever chickened out.', 2),
+  consequence('c-099', 'Act out the version of you that would have said yes.', 3),
+  consequence('c-100', 'Let the group ask you one thing about tonight so far.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-101', 'Say the thing you were thinking when you decided to refuse.', 3),
+  consequence('c-102', 'Give everyone here a completely undeserved award.', 2, { playerMode: 'group', minPlayers: 3 }),
+  consequence('c-103', 'Do your best impression of someone pretending to be brave.', 2),
+  consequence('c-104', 'Explain what you are like when you are actually scared.', 3),
+  consequence('c-105', 'Give the group a genuine compliment about tonight.', 1, { playerMode: 'group' }),
+  consequence('c-106', 'Let the person to your left set you one harmless rule until your next turn.', 3, { minPlayers: 3 }),
+  consequence('c-107', 'Do a dramatic reading of your own excuse.', 2),
+  consequence('c-108', 'Tell the group one true thing to make up for the one you skipped.', 3),
+  consequence('c-109', 'Perform a ten-second silent film of your own downfall.', 2, { physical: true }),
+  consequence('c-110', 'Give the group the real reason you said no.', 3),
 
-  // 18+ flavoured consequences — tone matches adult mode, boundaries unchanged.
+  // ── 18+ · bolder in tone, identical in pressure ────────────────────────────
   consequence('c18-001', 'Give the group your most convincing pickup line. Nobody is allowed to laugh.', 2, { ageRating: '18+', playerMode: 'group' }),
   consequence('c18-002', 'Deliver a heartfelt apology to every person you have ever ghosted.', 2, { ageRating: '18+' }),
   consequence('c18-003', 'Describe your ideal date, but make it sound like a hostage negotiation.', 2, { ageRating: '18+' }),
@@ -107,9 +132,22 @@ export const consequences = [
   consequence('c18-005', 'Compliment someone here in the most theatrically romantic way possible.', 2, { ageRating: '18+', minPlayers: 3 }),
   consequence('c18-006', 'Perform your most dramatic "we need to talk" opening line.', 2, { ageRating: '18+' }),
   consequence('c18-007', 'Explain your dating history using only film genres.', 2, { ageRating: '18+' }),
-  consequence('c18-008', 'Let the group ask you one harmless question about your type.', 3, { ageRating: '18+', playerMode: 'group', minPlayers: 3 }),
+  consequence('c18-008', 'Let the group ask you one question about your type.', 3, { ageRating: '18+', playerMode: 'group', minPlayers: 3 }),
   consequence('c18-009', 'Do an impression of yourself trying to be mysterious.', 2, { ageRating: '18+' }),
   consequence('c18-010', 'Give a toast to everyone who has ever left you on read.', 2, { ageRating: '18+' }),
   consequence('c18-011', 'Say the cheesiest romantic line you know, with total sincerity.', 2, { ageRating: '18+' }),
   consequence('c18-012', 'Describe what you are like at the start of a relationship, honestly.', 3, { ageRating: '18+' }),
+  consequence('c18-013', 'Tell the group the tamest thing on your list, since you would not do the rest.', 3, { ageRating: '18+' }),
+  consequence('c18-014', 'Describe your type in explicit detail. That is the price of running.', 4, { ageRating: '18+' }),
+  consequence('c18-015', 'Let the group ask you one explicit question instead. You answer it.', 4, { ageRating: '18+', playerMode: 'group', minPlayers: 3 }),
+  consequence('c18-016', 'Say out loud the thing you refused to do, in full detail, as if you had.', 4, { ageRating: '18+' }),
+  consequence('c18-017', 'Tell the room the reason you said no, and be honest about it.', 3, { ageRating: '18+' }),
+  consequence('c18-018', 'Describe the last time you did something you are pretending to be too shy for.', 4, { ageRating: '18+' }),
+  consequence('c18-019', 'Give the group your honest rating of your own confidence, and defend it.', 3, { ageRating: '18+' }),
+  consequence('c18-020', 'Tell the group what you would have needed for the answer to be yes.', 3, { ageRating: '18+' }),
+  consequence('c18-021', 'Confess the boldest thing you have ever actually done, to make up for it.', 4, { ageRating: '18+' }),
+  consequence('c18-022', 'Describe the version of you that would have said yes to that.', 3, { ageRating: '18+' }),
+  consequence('c18-023', 'Say the filthiest thing you are willing to say, since you would not do it.', 4, { ageRating: '18+' }),
+  consequence('c18-024', 'Tell the group the thing you would have done if nobody were watching.', 4, { ageRating: '18+' }),
+  consequence('c18-025', 'Let the group decide which of your answers tonight you have to expand on.', 4, { ageRating: '18+', playerMode: 'group', minPlayers: 3 }),
 ];

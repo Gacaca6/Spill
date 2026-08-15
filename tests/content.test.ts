@@ -8,11 +8,19 @@ describe('content integrity', () => {
   });
 
   it('meets the library size targets', () => {
-    expect(CONTENT_COUNTS.generalTruths).toBeGreaterThanOrEqual(150);
-    expect(CONTENT_COUNTS.generalDares).toBeGreaterThanOrEqual(150);
-    expect(CONTENT_COUNTS.consequences).toBeGreaterThanOrEqual(75);
-    expect(CONTENT_COUNTS.adultTruths).toBeGreaterThanOrEqual(40);
-    expect(CONTENT_COUNTS.adultDares).toBeGreaterThanOrEqual(40);
+    expect(CONTENT_COUNTS.generalTruths).toBeGreaterThanOrEqual(400);
+    expect(CONTENT_COUNTS.generalDares).toBeGreaterThanOrEqual(300);
+    expect(CONTENT_COUNTS.consequences).toBeGreaterThanOrEqual(130);
+    expect(CONTENT_COUNTS.adultTruths).toBeGreaterThanOrEqual(240);
+    expect(CONTENT_COUNTS.adultDares).toBeGreaterThanOrEqual(120);
+  });
+
+  it('spreads the adult deck across the whole spice ladder', () => {
+    // A deck that bunches at one intensity cannot escalate across a night.
+    for (const level of [1, 2, 3, 4, 5] as const) {
+      const truths = ADULT_PROMPTS.filter((p) => p.type === 'truth' && p.intensity === level);
+      expect(truths.length, `adult truths at intensity ${level}`).toBeGreaterThanOrEqual(20);
+    }
   });
 
   it('keeps the general and adult decks completely separate', () => {
@@ -77,22 +85,30 @@ describe('content safety', () => {
   ];
 
   /**
-   * Banned in anything that *instructs* a player — dares and consequences.
+   * Banned in anything that *instructs* a player, unless it is a partner dare.
    *
-   * Truths are questions about a person's own past and may reference these
-   * things; a dare or consequence saying the same word would be telling someone
-   * to do it to another person in the room, which the design forbids outright.
+   * Truths are questions about a player's own past and may reference these
+   * things freely. An instruction saying the same word is telling someone to do
+   * it — and if it lands on another person in the room, that person never chose
+   * it. Partner dares are the one exception, because they route through an
+   * explicit opt-in from the person on the receiving end.
    */
+  const TARGET = '(?:your|the|them|him|her|someone|anyone|everyone)';
+
   const FORBIDDEN_IN_INSTRUCTIONS = [
-    /\bkiss\b/i,
-    /\btouch\b/i,
+    // Contact patterns are *directed* — a bare verb also matches "describe your
+    // ideal first kiss", which instructs nothing and is fine in an adult deck.
+    new RegExp(`\\bkiss ${TARGET}\\b`, 'i'),
+    new RegExp(`\\btouch ${TARGET}\\b`, 'i'),
+    new RegExp(`\\bsit on ${TARGET}\\b`, 'i'),
     /\blick\b/i,
-    /\bstrip\b/i,
-    /take off (?:your|their)/i,
-    /\bsit on\b/i,
+    /\bmassage\b/i,
+    /\bhold (?:your|their) hand\b/i,
     /\blap\b/i,
     /\bshot(?:s)? of\b/i,
-    /\bdrink\b/i,
+    // Likewise: an instruction to drink, not the idiom "need a drink to admit".
+    /\b(?:take|have|down|finish) a drink\b/i,
+    /\bdrink (?:a|the|it|up)\b/i,
     /\bslap\b/i,
     /\bhit\b/i,
     /\bhurt\b/i,
@@ -103,8 +119,32 @@ describe('content safety', () => {
     /\bpost (?:this|it|a) .*(?:online|story|social)/i,
   ];
 
+  /**
+   * Banned even with an opt-in. Consent to a kiss in a party game is not consent
+   * to undress or to a sexual act, and an app cannot referee the difference in
+   * the moment — so it never asks for either.
+   */
+  const FORBIDDEN_EVEN_WITH_CONSENT = [
+    /\bstrip\b/i,
+    /take off (?:your|their|any)/i,
+    /\bremove (?:your|their) \w+/i,
+    /\bundress\b/i,
+    /\bunderwear\b/i,
+    /\bclothing\b/i,
+    /\bbra\b/i,
+    /\bgrind\b/i,
+    /\bstraddle\b/i,
+    /\bblindfold\b/i,
+    /\btie (?:up|them|their)\b/i,
+    /\bbedroom\b/i,
+    /\bshower\b/i,
+    /\bbed\b/i,
+  ];
+
   const everything = [...GENERAL_PROMPTS, ...ADULT_PROMPTS];
-  const instructions = [...everything.filter((prompt) => prompt.type === 'dare'), ...ALL_CONSEQUENCES];
+  const allDares = everything.filter((prompt) => prompt.type === 'dare');
+  const partnerDares = allDares.filter((prompt) => prompt.requiresPartner);
+  const unconsentedInstructions = [...allDares.filter((prompt) => !prompt.requiresPartner), ...ALL_CONSEQUENCES];
 
   function offenders<T extends { id: string; text: string }>(items: readonly T[], patterns: RegExp[]) {
     return items.filter((item) => patterns.some((pattern) => pattern.test(item.text))).map((item) => `${item.id}: ${item.text}`);
@@ -115,8 +155,37 @@ describe('content safety', () => {
     expect(offenders(ALL_CONSEQUENCES, FORBIDDEN_ANYWHERE)).toEqual([]);
   });
 
-  it('never instructs physical contact, drinking or anything unsafe', () => {
-    expect(offenders(instructions, FORBIDDEN_IN_INSTRUCTIONS)).toEqual([]);
+  it('never instructs contact or anything unsafe outside a partner dare', () => {
+    expect(offenders(unconsentedInstructions, FORBIDDEN_IN_INSTRUCTIONS)).toEqual([]);
+  });
+
+  it('never instructs undressing or a sexual act, even in a partner dare', () => {
+    expect(offenders(allDares, FORBIDDEN_EVEN_WITH_CONSENT)).toEqual([]);
+    expect(offenders(ALL_CONSEQUENCES, FORBIDDEN_EVEN_WITH_CONSENT)).toEqual([]);
+  });
+
+  it('routes every physical partner dare through the consent flag', () => {
+    /**
+     * Contact *directed at another person* must be flagged, or the dare would
+     * skip the opt-in and land on someone who never agreed to it.
+     *
+     * Both halves are required. A contact verb alone catches innocent phrasing
+     * — "dance with no music", "let it sit", "describe your ideal first kiss" —
+     * and a test that cries wolf is a test that gets deleted.
+     */
+    const contactVerb = /\b(kiss|whisper|massage|hug|hold hands|rest your head|sit on|dance with|trace)\b/i;
+    const aimedAtSomeone = /\b(your partner|the person (?:on|to|opposite)|them|their)\b/i;
+
+    const unflagged = allDares.filter(
+      (prompt) => contactVerb.test(prompt.text) && aimedAtSomeone.test(prompt.text) && !prompt.requiresPartner,
+    );
+    expect(unflagged.map((prompt) => prompt.id)).toEqual([]);
+  });
+
+  it('keeps partner dares out of the general deck entirely', () => {
+    expect(GENERAL_PROMPTS.some((prompt) => prompt.requiresPartner)).toBe(false);
+    expect(partnerDares.every((prompt) => prompt.ageRating === '18+')).toBe(true);
+    expect(partnerDares.every((prompt) => (prompt.minPlayers ?? 2) >= 3)).toBe(true);
   });
 
   it('keeps every prompt short enough to read out loud', () => {

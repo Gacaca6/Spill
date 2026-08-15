@@ -12,6 +12,8 @@ interface PromptOptions {
   playerMode?: PlayerMode;
   physical?: boolean;
   needsOther?: boolean;
+  /** Performed with a second player, who has to opt in first. */
+  partner?: boolean;
   minPlayers?: number;
 }
 
@@ -33,8 +35,11 @@ function build(
     ageRating,
     playerMode: options.playerMode ?? 'individual',
     requiresPhysicalAction: options.physical ?? false,
-    requiresAnotherPerson: options.needsOther ?? false,
+    // A partner dare necessarily involves someone else, so the flag implies it
+    // rather than making every entry declare both.
+    requiresAnotherPerson: options.needsOther ?? options.partner ?? false,
   };
+  if (options.partner) prompt.requiresPartner = true;
   if (options.minPlayers !== undefined) prompt.minPlayers = options.minPlayers;
   return prompt;
 }

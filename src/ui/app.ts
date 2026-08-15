@@ -16,6 +16,7 @@ export type ScreenName =
   | 'intro'
   | 'wheel'
   | 'reveal'
+  | 'consent'
   | 'challenge'
   | 'mercy'
   | 'consequence'
@@ -201,7 +202,15 @@ export class App {
     // card — or to its consequence, if one had already been drawn — so nobody
     // loses a turn to a stray refresh. With no turn in flight, back to the wheel.
     const turn = engine.state.activeTurn;
-    const landing: ScreenName = !turn ? 'wheel' : turn.consequenceId ? 'consequence' : 'challenge';
+    const landing: ScreenName = !turn
+      ? 'wheel'
+      : turn.consequenceId
+        ? 'consequence'
+        : // A partner who had not answered yet still gets asked first — the card
+          // must not appear just because the app restarted.
+          engine.awaitingPartner
+          ? 'consent'
+          : 'challenge';
 
     void this.go(landing);
     return true;
@@ -255,5 +264,5 @@ export class App {
 }
 
 function isPlaying(name: ScreenName): boolean {
-  return ['wheel', 'reveal', 'challenge', 'mercy', 'consequence', 'reaction'].includes(name);
+  return ['wheel', 'reveal', 'consent', 'challenge', 'mercy', 'consequence', 'reaction'].includes(name);
 }

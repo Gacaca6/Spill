@@ -20,6 +20,8 @@ export interface SelectionInput {
   usedIds: readonly string[];
   recentCategories: readonly Category[];
   rng: Rng;
+  /** Set when a partner has declined, so the replacement involves nobody else. */
+  excludePartner?: boolean;
 }
 
 export interface SelectionResult<T> {
@@ -46,6 +48,10 @@ function isEligible(prompt: Prompt, input: SelectionInput): boolean {
   if ((prompt.minPlayers ?? 2) > input.playerCount) return false;
   if (prompt.playerMode === 'group' && input.playerCount < 3) return false;
   if (prompt.requiresAnotherPerson && input.playerCount < 2) return false;
+
+  // A partner dare needs a third person: the player, the partner, and enough
+  // room that the partner is not simply the only other person present.
+  if (prompt.requiresPartner && (input.excludePartner || input.playerCount < 3)) return false;
 
   return true;
 }

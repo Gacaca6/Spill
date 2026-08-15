@@ -261,6 +261,90 @@ describe('refusal, consequences and mercy', () => {
   });
 });
 
+describe('partner dares', () => {
+  /** Plays until a partner dare comes up, so the mechanic can be exercised. */
+  function drawPartnerDare(names: string[], seed: number) {
+    const engine = makeEngine(names, '18plus', seed);
+    for (let i = 0; i < 200; i++) {
+      const player = engine.nextPlayer();
+      engine.beginTurn(player.id);
+      if (engine.state.activeTurn?.partnerId) return engine;
+      engine.completeTurn();
+    }
+    return null;
+  }
+
+  it('assigns a partner who is never the player themselves', () => {
+    let found = 0;
+    for (let seed = 1; seed <= 20; seed++) {
+      const engine = drawPartnerDare(['A', 'B', 'C', 'D'], seed);
+      if (!engine) continue;
+      found++;
+      const turn = engine.state.activeTurn!;
+      expect(turn.partnerId).not.toBe(turn.playerId);
+      expect(engine.state.players.some((p) => p.id === turn.partnerId)).toBe(true);
+    }
+    expect(found).toBeGreaterThan(0);
+  });
+
+  it('withholds the card until the partner has answered', () => {
+    const engine = drawPartnerDare(['A', 'B', 'C', 'D'], 3);
+    expect(engine).not.toBeNull();
+    expect(engine!.awaitingPartner).toBe(true);
+
+    engine!.acceptPartner();
+    expect(engine!.awaitingPartner).toBe(false);
+  });
+
+  it('silently swaps to a dare involving nobody else when the partner passes', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const engine = drawPartnerDare(['A', 'B', 'C', 'D'], seed);
+      if (!engine) continue;
+
+      const original = engine.state.activeTurn!.promptId;
+      const replacement = engine.declinePartner();
+
+      expect(replacement).not.toBeNull();
+      expect(replacement!.id).not.toBe(original);
+      // The replacement must not drag in another partner, and the type is kept
+      // so the alternation rule still holds.
+      expect(replacement!.requiresPartner).toBeFalsy();
+      expect(replacement!.type).toBe('dare');
+      expect(engine.state.activeTurn!.partnerId).toBeNull();
+      expect(engine.awaitingPartner).toBe(false);
+    }
+  });
+
+  it('never serves a partner dare to a pair, who have no third person', () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const engine = makeEngine(['A', 'B'], '18plus', seed);
+      playTurns(engine, 120);
+      for (const turn of engine.state.history) {
+        expect(getPrompt(turn.promptId)?.requiresPartner).toBeFalsy();
+      }
+    }
+  });
+
+  it('never serves a partner dare in a general mode', () => {
+    for (const mode of ['chill', 'tea', 'chaos', 'bold'] as GameMode[]) {
+      const engine = makeEngine(['A', 'B', 'C', 'D'], mode);
+      playTurns(engine, 150);
+      for (const turn of engine.state.history) {
+        expect(getPrompt(turn.promptId)?.requiresPartner).toBeFalsy();
+      }
+    }
+  });
+
+  it('restores an unanswered partner prompt after a refresh', () => {
+    const engine = drawPartnerDare(['A', 'B', 'C', 'D'], 3);
+    expect(engine).not.toBeNull();
+
+    const resumed = GameEngine.resume(engine!.snapshot());
+    expect(resumed!.awaitingPartner).toBe(true);
+    expect(resumed!.activePartner?.id).toBe(engine!.state.activeTurn!.partnerId);
+  });
+});
+
 describe('state integrity', () => {
   it('restores an in-flight turn from a snapshot', () => {
     const engine = makeEngine(['A', 'B', 'C']);

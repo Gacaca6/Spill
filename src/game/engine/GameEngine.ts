@@ -18,7 +18,7 @@ import { selectConsequence, selectPrompt } from '@/game/algorithms/selection';
 import { STATE_VERSION, LIMITS } from '@/config';
 import { createId } from '@/utils/id';
 import { dedupeNames } from '@/utils/names';
-import { defaultRandom, type Rng } from '@/utils/random';
+import { defaultRandom, pick, type Rng } from '@/utils/random';
 
 /**
  * The game engine.
@@ -221,6 +221,8 @@ export class GameEngine {
       consequenceId: null,
       doubledDown: false,
       mercyUsed: false,
+      partnerId: prompt.requiresPartner ? this.pickPartner(playerId) : null,
+      partnerAccepted: false,
       band,
     };
 
@@ -232,7 +234,54 @@ export class GameEngine {
     return { prompt, type: prompt.type };
   }
 
-  private draw(type: ChallengeType, band: Intensity[]): Prompt | null {
+  /** Anyone but the player whose turn it is. */
+  private pickPartner(playerId: string): string | null {
+    const candidates = this.data.players.filter((player) => player.id !== playerId);
+    return pick(candidates, this.rng)?.id ?? null;
+  }
+
+  get activePartner(): Player | null {
+    const id = this.data.activeTurn?.partnerId;
+    return id ? (this.getPlayer(id) ?? null) : null;
+  }
+
+  /** True while the card must stay hidden — a partner has been asked but has not answered. */
+  get awaitingPartner(): boolean {
+    const turn = this.data.activeTurn;
+    return Boolean(turn && turn.partnerId && !turn.partnerAccepted);
+  }
+
+  acceptPartner(): void {
+    const turn = this.data.activeTurn;
+    if (!turn?.partnerId) return;
+    turn.partnerAccepted = true;
+    this.touch();
+  }
+
+  /**
+   * The partner passes.
+   *
+   * The dare is silently replaced with one that involves nobody else, so the
+   * room never learns who declined or what the original card said. Saying no
+   * has to cost nothing, or it is not really a choice.
+   */
+  declinePartner(): Prompt | null {
+    const turn = this.data.activeTurn;
+    if (!turn) return null;
+
+    const replacement = this.draw(turn.type, turn.band, { excludePartner: true });
+    if (!replacement) return null;
+
+    turn.promptId = replacement.id;
+    turn.partnerId = null;
+    turn.partnerAccepted = false;
+    this.data.intensity = replacement.intensity;
+    this.touch();
+
+    return replacement;
+  }
+
+  private draw(type: ChallengeType, band: Intensity[], options: { excludePartner?: boolean } = {}): Prompt | null {
     const result = selectPrompt({
       pool: this.pool,
       type,
@@ -242,6 +291,7 @@ export class GameEngine {
       usedIds: this.data.usedPromptIds,
       recentCategories: this.data.recentCategories,
       rng: this.rng,
+      excludePartner: options.excludePartner ?? false,
     });
 
     if (result.recycled) {
@@ -271,6 +321,10 @@ export class GameEngine {
 
     turn.promptId = replacement.id;
     turn.mercyUsed = true;
+    // Mercy can land on a partner dare, which needs its own partner and its own
+    // opt-in rather than inheriting the previous card's.
+    turn.partnerId = replacement.requiresPartner ? this.pickPartner(turn.playerId) : null;
+    turn.partnerAccepted = false;
 
     const player = this.getPlayer(turn.playerId);
     if (player) {

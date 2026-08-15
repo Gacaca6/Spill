@@ -3,7 +3,15 @@ import '@/styles/global.css';
 import { App } from '@/ui/app';
 import { errorScreen, homeScreen, howToScreen, resumeScreen, splashScreen } from '@/ui/screens/onboarding';
 import { ageGateScreen, introScreen, modeScreen, setupScreen } from '@/ui/screens/setup';
-import { challengeScreen, consequenceScreen, mercyScreen, reactionScreen, revealScreen, wheelScreen } from '@/ui/screens/play';
+import {
+  challengeScreen,
+  consentScreen,
+  consequenceScreen,
+  mercyScreen,
+  reactionScreen,
+  revealScreen,
+  wheelScreen,
+} from '@/ui/screens/play';
 import { recapScreen } from '@/ui/screens/recap';
 
 /** Entry point: wire the screens together and start the app. */
@@ -23,6 +31,7 @@ function boot(): void {
   app.register('intro', introScreen);
   app.register('wheel', wheelScreen);
   app.register('reveal', revealScreen);
+  app.register('consent', consentScreen);
   app.register('challenge', challengeScreen);
   app.register('mercy', mercyScreen);
   app.register('consequence', consequenceScreen);

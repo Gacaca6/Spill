@@ -184,9 +184,72 @@ export function revealScreen(app: App): ScreenView {
       haptic('reveal');
 
       await taps.pause(TIMING.typeHold);
-      await app.go('challenge', { instant: true });
+      // A partner dare goes through consent before the card is ever shown.
+      await app.go(engine.awaitingPartner ? 'consent' : 'challenge', { instant: true });
     },
   };
+}
+
+/**
+ * The partner consent gate.
+ *
+ * Shown only for dares that physically involve a second player. The card stays
+ * hidden until that player has answered, and answering no is silent: the dare is
+ * swapped for one involving nobody else and the room is never told what happened
+ * or who declined. A refusal that carries a social cost is not a real refusal.
+ */
+export function consentScreen(app: App): ScreenView {
+  const engine = app.requireEngine();
+  const player = engine.currentPlayer;
+  const partner = engine.activePartner;
+
+  if (!player || !partner || !engine.awaitingPartner) {
+    return { el: screen('center'), onEnter: () => void app.go('challenge', { instant: true }) };
+  }
+
+  const el = screen(
+    'center',
+    h(
+      'div',
+      { class: 'stack stack--6' },
+      h(
+        'div',
+        { class: 'stack stack--3' },
+        h('p', { class: 'eyebrow', text: `${player.name} drew a partner dare` }),
+        h('h1', { class: 'display display--md', 'data-length': lengthClass(partner.name, 12), text: `${partner.name}, it's you.` }),
+        h('p', {
+          class: 'lede',
+          text: 'This one involves you physically. Nobody else sees the card until you decide, and if you pass, nobody finds out you did.',
+        }),
+      ),
+      h(
+        'div',
+        { class: 'split' },
+        button({
+          label: "I'm in",
+          variant: 'primary',
+          onPress: () => {
+            engine.acceptPartner();
+            app.persist();
+            void app.go('challenge', { instant: true });
+          },
+        }),
+        button({
+          label: 'Pass',
+          variant: 'secondary',
+          onPress: () => {
+            engine.declinePartner();
+            app.persist();
+            // No toast, no announcement — a silent swap is the entire point.
+            void app.go('challenge', { instant: true });
+          },
+        }),
+      ),
+      h('p', { class: 'meta', text: 'Pass the phone over. No explanation needed either way.' }),
+    ),
+  );
+
+  return { el, announce: `${partner.name}, you have been picked for a partner dare. Are you in?` };
 }
 
 /** The challenge card. */
@@ -202,15 +265,17 @@ export function challengeScreen(app: App): ScreenView {
 
   const canAskMercy = engine.state.players.length >= 3 && !turn.mercyUsed;
 
+  const partner = engine.activePartner;
+
   const card = h(
     'article',
     { class: 'card card--challenge anim-card' },
-    h('p', { class: 'card__label', text: turn.type }),
+    h('p', { class: 'card__label', text: partner ? `${turn.type} · with ${partner.name}` : turn.type }),
     h('p', { class: 'card__text', 'data-length': lengthClass(prompt.text), text: prompt.text }),
     h(
       'div',
       { class: 'card__footer' },
-      h('span', { text: player.name }),
+      h('span', { text: partner ? `${player.name} + ${partner.name}` : player.name }),
       h('span', { text: INTENSITY_LABELS[prompt.intensity] ?? '' }),
     ),
   );

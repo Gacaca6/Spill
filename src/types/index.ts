@@ -37,6 +37,16 @@ export interface Prompt {
   playerMode: PlayerMode;
   requiresPhysicalAction: boolean;
   requiresAnotherPerson: boolean;
+  /**
+   * This dare is performed *with* a second player, who the engine picks and who
+   * must opt in before the card is shown to the room.
+   *
+   * `requiresAnotherPerson` only means the prompt mentions someone else — a
+   * compliment, an impression. `requiresPartner` means somebody else is
+   * physically involved, which is a different thing entirely and is the flag the
+   * consent step keys off.
+   */
+  requiresPartner?: boolean;
   /** Smallest group this prompt still works with. Defaults to 2. */
   minPlayers?: number;
 }
@@ -102,6 +112,14 @@ export interface ActiveTurn {
   consequenceId: string | null;
   doubledDown: boolean;
   mercyUsed: boolean;
+  /**
+   * The second player in a partner dare. Set when the drawn prompt has
+   * `requiresPartner`, and cleared if they decline — at which point the dare is
+   * silently swapped for one that involves nobody else.
+   */
+  partnerId: string | null;
+  /** True once the partner has opted in, which is when the card may be shown. */
+  partnerAccepted: boolean;
   /** Intensity band actually used for the draw, for display and debugging. */
   band: Intensity[];
 }
