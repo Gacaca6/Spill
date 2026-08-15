@@ -18,9 +18,12 @@ export function splashScreen(app: App): ScreenView {
     h(
       'div',
       { class: 'splash' },
-      h('div', {},
-        h('h1', { class: 'wordmark wordmark--xl splash__mark', text: APP_NAME }),
-        h('p', { class: 'splash__tagline', text: APP_TAGLINE }),
+      // The tagline lives inside the wordmark so it hangs beneath it without
+      // affecting what gets centred.
+      h(
+        'h1',
+        { class: 'wordmark wordmark--xl splash__mark', text: APP_NAME },
+        h('span', { class: 'splash__tagline', text: APP_TAGLINE }),
       ),
       h('p', { class: 'splash__skip', text: 'Tap to skip' }),
     ),

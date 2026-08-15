@@ -197,7 +197,7 @@ export function modeScreen(app: App): ScreenView {
       },
       h(
         'span',
-        {},
+        { class: 'tile__text' },
         h('span', { class: 'tile__name', text: definition.name }),
         h('span', { class: 'tile__tagline', text: definition.tagline }),
       ),

@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="SPILL">
+  <defs>
+    <clipPath id="c0"><rect x="7" y="33.301" width="11.021" height="18.702" /><rect x="18.021" y="33.301" width="11.021" height="9.351" /></clipPath>
+    <clipPath id="c1"><rect x="18.021" y="47.997" width="11.021" height="18.702" /><rect x="7" y="57.348" width="11.021" height="9.351" /></clipPath>
+    <clipPath id="c2"><rect x="41.066" y="33.301" width="8.683" height="19.37" /></clipPath>
+  </defs>
   <rect width="100" height="100" fill="#000" />
-  <g>
-    <circle cx="50" cy="50" r="35.26" fill="none" stroke="#fff" stroke-width="3.44" />
-    <line x1="50.00" y1="58.60" x2="50.00" y2="83.54" stroke="#fff" stroke-width="2.4" />
-    <line x1="42.55" y1="45.70" x2="20.95" y2="33.23" stroke="#fff" stroke-width="2.4" />
-    <line x1="57.45" y1="45.70" x2="79.05" y2="33.23" stroke="#fff" stroke-width="2.4" />
-    <circle cx="50" cy="50" r="5.16" fill="#fff" />
-    <path d="M50 19.04 L46.34 7.00 L53.66 7.00 Z" fill="#fff" />
-  </g>
+  <path d="M 7 42.652 a 11.021 9.351 0 1 0 22.042 0 a 11.021 9.351 0 1 0 -22.042 0 Z M 11.342 42.652 a 6.679 5.009 0 1 0 13.358 0 a 6.679 5.009 0 1 0 -13.358 0 Z" fill="#fff" fill-rule="evenodd" clip-path="url(#c0)" />
+  <path d="M 7 57.348 a 11.021 9.351 0 1 0 22.042 0 a 11.021 9.351 0 1 0 -22.042 0 Z M 11.342 57.348 a 6.679 5.009 0 1 0 13.358 0 a 6.679 5.009 0 1 0 -13.358 0 Z" fill="#fff" fill-rule="evenodd" clip-path="url(#c1)" />
+  <rect x="32.383" y="33.301" width="5.177" height="33.398" fill="#fff" />
+  <path d="M 32.383 42.986 a 8.683 9.685 0 1 0 17.366 0 a 8.683 9.685 0 1 0 -17.366 0 Z M 36.725 42.986 a 4.341 5.343 0 1 0 8.682 0 a 4.341 5.343 0 1 0 -8.682 0 Z" fill="#fff" fill-rule="evenodd" clip-path="url(#c2)" />
+  <rect x="53.089" y="33.301" width="5.177" height="33.398" fill="#fff" />
+  <rect x="61.606" y="33.301" width="5.177" height="33.398" fill="#fff" />
+  <rect x="61.606" y="61.522" width="14.027" height="5.177" fill="#fff" />
+  <rect x="78.973" y="33.301" width="5.177" height="33.398" fill="#fff" />
+  <rect x="78.973" y="61.522" width="14.027" height="5.177" fill="#fff" />
 </svg>

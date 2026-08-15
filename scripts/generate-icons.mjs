@@ -16,81 +16,171 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ICON_DIR = path.join(ROOT, 'public', 'icons');
 const SPLASH_DIR = path.join(ROOT, 'public', 'splash');
 
-// ── geometry (normalised to a unit circle centred at 0,0) ────────────────────
+// ── the wordmark ─────────────────────────────────────────────────────────────
 
-const RIM_OUTER = 0.86;
-const RIM_INNER = 0.78;
-const HUB = 0.12;
-const SPOKE_INNER = 0.2;
-const SPOKE_OUTER = 0.78;
-const SPOKE_HALF_WIDTH = 0.035;
-const SPOKE_ANGLES = [90, 210, 330];
+/**
+ * SPILL, drawn as geometry.
+ *
+ * The icon is the wordmark and nothing else. There is no font rasteriser here
+ * and no vendored font binary, so the five glyphs are constructed from
+ * rectangles and rings — heavy, geometric, and identical in the PNGs and the
+ * SVG because both are generated from these same numbers.
+ *
+ * Coordinates are in cap-height units: y = 0 is the cap line, y = 1 the
+ * baseline, x grows to the right from each glyph's own origin.
+ */
+/**
+ * The bowls are ellipses, not circles, and that is the whole trick.
+ *
+ * Two circular bowls stacked to fill the cap height are forced to an outer
+ * radius of ~0.25, which leaves the counter at `2 × (0.25 − stem)`. At any
+ * weight worth calling bold that closes to a slit. Widening the bowls
+ * horizontally decouples the two: the vertical radius stays pinned by the cap
+ * height while the horizontal radius opens the counter back up.
+ *
+ * Bowls are positioned by their outer edge rather than their centre, so a
+ * bowl's left edge lines up with the stem's left edge and the counter opens to
+ * the right of the stem instead of being buried inside it.
+ */
+const STEM = 0.155;
 
-const POINTER_APEX = -0.72;
-const POINTER_BASE = -1.0;
-const POINTER_HALF = 0.085;
+/**
+ * Bowls are stroked slightly lighter than the stems, which is what real
+ * typefaces do — a curve of equal measured width reads heavier than a straight
+ * stem. It also buys back the counter space the curves need.
+ */
+const BOWL = 0.13;
 
-/** True when the point is part of the white mark. */
-function inMark(x, y) {
-  const d = Math.hypot(x, y);
+// S: the vertical radius is a little over a quarter of the cap height, so the
+// two bowls overlap and that overlap becomes the spine. At exactly 0.25 they are
+// tangent and the waist pinches to a point; much more and the middle fills in.
+const S_RX = 0.33;
+const S_RY = 0.28;
 
-  if (d >= RIM_INNER && d <= RIM_OUTER) return true;
-  if (d <= HUB) return true;
+const P_RX = 0.26;
+const P_RY = 0.29;
 
-  // Spokes, as projections onto each spoke's direction vector. Doing this with
-  // angles instead invites wrap-around bugs at the ±π boundary, which turn thin
-  // lines into filled wedges.
-  for (const spoke of SPOKE_ANGLES) {
-    const rad = (spoke * Math.PI) / 180;
-    const dx = Math.cos(rad);
-    const dy = Math.sin(rad);
-    const along = x * dx + y * dy;
-    const perpendicular = Math.abs(x * dy - y * dx);
-    if (along >= SPOKE_INNER && along <= SPOKE_OUTER && perpendicular <= SPOKE_HALF_WIDTH) return true;
+const L_FOOT = 0.42;
+const TRACKING = 0.1;
+
+function inRect(x, y, x0, y0, x1, y1) {
+  return x >= x0 && x <= x1 && y >= y0 && y <= y1;
+}
+
+/** Elliptical ring: inside the outer ellipse, outside the one inset by `BOWL`. */
+function inRing(x, y, cx, cy, rx, ry) {
+  const outerX = (x - cx) / rx;
+  const outerY = (y - cy) / ry;
+  if (outerX * outerX + outerY * outerY > 1) return false;
+
+  const innerRx = rx - BOWL;
+  const innerRy = ry - BOWL;
+  if (innerRx <= 0 || innerRy <= 0) return true;
+
+  const innerX = (x - cx) / innerRx;
+  const innerY = (y - cy) / innerRy;
+  return innerX * innerX + innerY * innerY >= 1;
+}
+
+const GLYPHS = {
+  S: {
+    width: 2 * S_RX,
+    hit(x, y) {
+      const cx = S_RX;
+      const topY = S_RY;
+      const bottomY = 1 - S_RY;
+
+      // Upper bowl opens to the bottom-right, lower bowl to the top-left.
+      if (inRing(x, y, cx, topY, S_RX, S_RY) && !(x > cx && y > topY)) return true;
+      if (inRing(x, y, cx, bottomY, S_RX, S_RY) && !(x < cx && y < bottomY)) return true;
+      return false;
+    },
+  },
+  P: {
+    width: 2 * P_RX,
+    hit(x, y) {
+      if (inRect(x, y, 0, 0, STEM, 1)) return true;
+      return x >= P_RX && inRing(x, y, P_RX, P_RY, P_RX, P_RY);
+    },
+  },
+  I: {
+    width: STEM,
+    hit(x, y) {
+      return inRect(x, y, 0, 0, STEM, 1);
+    },
+  },
+  L: {
+    width: L_FOOT,
+    hit(x, y) {
+      return inRect(x, y, 0, 0, STEM, 1) || inRect(x, y, 0, 1 - STEM, L_FOOT, 1);
+    },
+  },
+};
+
+const WORD = 'SPILL';
+
+/** Left edge of each glyph, plus the wordmark's total width in cap-height units. */
+const LAYOUT = (() => {
+  const offsets = [];
+  let cursor = 0;
+  for (const letter of WORD) {
+    offsets.push({ letter, x: cursor });
+    cursor += GLYPHS[letter].width + TRACKING;
   }
+  return { offsets, width: cursor - TRACKING };
+})();
 
-  // Pointer: a triangle above the rim, apex pointing into the wheel.
-  if (y >= POINTER_BASE && y <= POINTER_APEX) {
-    const progress = (y - POINTER_BASE) / (POINTER_APEX - POINTER_BASE);
-    const halfWidth = POINTER_HALF * (1 - progress);
-    if (Math.abs(x) <= halfWidth) return true;
+/** True when the point is part of the white mark. `x`/`y` are in cap-height units. */
+function inMark(x, y) {
+  if (y < 0 || y > 1) return false;
+
+  for (const { letter, x: offset } of LAYOUT.offsets) {
+    const glyph = GLYPHS[letter];
+    const local = x - offset;
+    if (local < 0 || local > glyph.width) continue;
+    if (glyph.hit(local, y)) return true;
   }
 
   return false;
 }
 
 /**
- * Renders RGBA pixels on an arbitrary canvas with the mark centred.
+ * Renders RGBA pixels: a black canvas with the wordmark centred on it.
  *
- * `markRadius` is the radius in pixels that the unit circle maps to, which is
- * what lets the same geometry produce a tight app icon, a padded maskable icon
- * and a mostly-empty phone-sized launch image.
+ * `capHeight` is the cap height in pixels, which is the single knob that scales
+ * the same geometry from a 32px favicon to a 1320px launch image. `centreY`
+ * defaults to the middle but can be nudged so a launch image lines up with
+ * wherever the app's own splash puts the wordmark.
  */
-function renderCanvas(width, height, markRadius) {
+function renderCanvas(width, height, capHeight, centreY = height / 2) {
   const pixels = Buffer.alloc(width * height * 4);
   const samples = 3;
-  const cx = width / 2;
-  const cy = height / 2;
 
-  // Everything outside this radius is guaranteed black, so the supersampling
-  // loop can be skipped entirely — which matters on a 1320×2868 launch image.
-  const bound = markRadius * 1.05;
+  const markWidth = LAYOUT.width * capHeight;
+  const originX = (width - markWidth) / 2;
+  const originY = centreY - capHeight / 2;
+
+  // Rows and columns outside the wordmark's box are pure black, so the
+  // supersampling loop is skipped for them — which is most of a launch image.
+  const top = Math.floor(originY) - 1;
+  const bottom = Math.ceil(originY + capHeight) + 1;
+  const left = Math.floor(originX) - 1;
+  const right = Math.ceil(originX + markWidth) + 1;
 
   for (let py = 0; py < height; py++) {
-    const dy = py + 0.5 - cy;
+    const inBandY = py >= top && py <= bottom;
 
     for (let px = 0; px < width; px++) {
-      const dx = px + 0.5 - cx;
       const offset = (py * width + px) * 4;
       pixels[offset + 3] = 255;
 
-      if (Math.abs(dx) > bound || Math.abs(dy) > bound) continue;
+      if (!inBandY || px < left || px > right) continue;
 
       let hits = 0;
       for (let sy = 0; sy < samples; sy++) {
         for (let sx = 0; sx < samples; sx++) {
-          const x = (px + (sx + 0.5) / samples - cx) / markRadius;
-          const y = (py + (sy + 0.5) / samples - cy) / markRadius;
+          const x = (px + (sx + 0.5) / samples - originX) / capHeight;
+          const y = (py + (sy + 0.5) / samples - originY) / capHeight;
           if (inMark(x, y)) hits++;
         }
       }
@@ -106,9 +196,9 @@ function renderCanvas(width, height, markRadius) {
   return pixels;
 }
 
-/** Square icon: `scale` is the fraction of the half-width the mark occupies. */
+/** Square icon: `scale` is the fraction of the icon width the wordmark spans. */
 function render(size, scale) {
-  return renderCanvas(size, size, (size / 2) * scale);
+  return renderCanvas(size, size, (size * scale) / LAYOUT.width);
 }
 
 // ── PNG encoding ─────────────────────────────────────────────────────────────
@@ -167,23 +257,25 @@ function encodePng(width, height, pixels) {
 
 // ── output ───────────────────────────────────────────────────────────────────
 
+/** `scale` is the fraction of the icon's width that the wordmark spans. */
 const TARGETS = [
-  { file: 'icon-32.png', size: 32, scale: 0.92 },
-  { file: 'icon-64.png', size: 64, scale: 0.9 },
-  // iOS home-screen icons. iOS does not round-crop these, so the mark can sit
-  // closer to the edge than a maskable icon allows.
-  { file: 'apple-touch-icon-152.png', size: 152, scale: 0.82 },
-  { file: 'apple-touch-icon-167.png', size: 167, scale: 0.82 },
-  { file: 'apple-touch-icon-180.png', size: 180, scale: 0.82 },
-  { file: 'icon-180.png', size: 180, scale: 0.86 },
-  { file: 'icon-192.png', size: 192, scale: 0.86 },
-  { file: 'icon-256.png', size: 256, scale: 0.86 },
-  { file: 'icon-384.png', size: 384, scale: 0.86 },
-  { file: 'icon-512.png', size: 512, scale: 0.86 },
-  // Maskable icons are cropped to a platform-chosen shape; 0.62 keeps the whole
-  // mark inside the 80% safe zone even under an aggressive circular mask.
-  { file: 'maskable-192.png', size: 192, scale: 0.62 },
-  { file: 'maskable-512.png', size: 512, scale: 0.62 },
+  { file: 'icon-32.png', size: 32, scale: 0.86 },
+  { file: 'icon-64.png', size: 64, scale: 0.84 },
+  // iOS home-screen icons. iOS does not round-crop these, so the wordmark can
+  // sit closer to the edge than a maskable icon allows.
+  { file: 'apple-touch-icon-152.png', size: 152, scale: 0.78 },
+  { file: 'apple-touch-icon-167.png', size: 167, scale: 0.78 },
+  { file: 'apple-touch-icon-180.png', size: 180, scale: 0.78 },
+  { file: 'icon-180.png', size: 180, scale: 0.8 },
+  { file: 'icon-192.png', size: 192, scale: 0.8 },
+  { file: 'icon-256.png', size: 256, scale: 0.8 },
+  { file: 'icon-384.png', size: 384, scale: 0.8 },
+  { file: 'icon-512.png', size: 512, scale: 0.8 },
+  // Maskable icons get cropped to a platform-chosen shape, often a circle. A
+  // 2.4:1 wordmark inscribed in the 80% safe circle has to come in to ~0.66 of
+  // the width, or the first and last letters lose their outer edges.
+  { file: 'maskable-192.png', size: 192, scale: 0.66 },
+  { file: 'maskable-512.png', size: 512, scale: 0.66 },
 ];
 
 mkdirSync(ICON_DIR, { recursive: true });
@@ -225,11 +317,21 @@ const launchLinks = [];
 for (const { w, h, r } of LAUNCH_SCREENS) {
   const width = w * r;
   const height = h * r;
-  // Mark sized against the narrow edge so it reads the same on every device.
-  const markRadius = Math.round(width * 0.19);
   const file = `launch-${width}x${height}.png`;
 
-  writeFileSync(path.join(SPLASH_DIR, file), encodePng(width, height, renderCanvas(width, height, markRadius)));
+  /**
+   * Matched to the app's own splash so the handover is invisible: iOS shows
+   * this image, the app boots behind it and renders the same wordmark at the
+   * same size in the same place.
+   *
+   * The app sets the wordmark with `--display-lg`, i.e.
+   * `clamp(3.25rem, 2rem + 6.2vw, 6rem)` against the device's CSS width, and
+   * caps are roughly 0.72 of the font size in this family.
+   */
+  const fontSize = Math.min(96, Math.max(52, 32 + 0.062 * w));
+  const capHeight = fontSize * 0.72 * r;
+
+  writeFileSync(path.join(SPLASH_DIR, file), encodePng(width, height, renderCanvas(width, height, capHeight)));
 
   launchLinks.push({
     href: `/splash/${file}`,
@@ -257,24 +359,99 @@ icoHeader.writeUInt32LE(icoPng.length, 14);
 icoHeader.writeUInt32LE(22, 18); // offset to the image data
 writeFileSync(path.join(ROOT, 'public', 'favicon.ico'), Buffer.concat([icoHeader, icoPng]));
 
-/** Scalable favicon, same geometry expressed as vectors. */
-const spokes = SPOKE_ANGLES.map((angle) => {
-  const rad = (angle * Math.PI) / 180;
-  const x1 = (50 + 50 * SPOKE_INNER * 0.86 * Math.cos(rad)).toFixed(2);
-  const y1 = (50 + 50 * SPOKE_INNER * 0.86 * Math.sin(rad)).toFixed(2);
-  const x2 = (50 + 50 * SPOKE_OUTER * 0.86 * Math.cos(rad)).toFixed(2);
-  const y2 = (50 + 50 * SPOKE_OUTER * 0.86 * Math.sin(rad)).toFixed(2);
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fff" stroke-width="2.4" />`;
-}).join('\n    ');
+/**
+ * Scalable favicon — the same geometry as vectors.
+ *
+ * Bowls are emitted as evenodd paths (outer ellipse, inner ellipse punched out)
+ * clipped to the quadrants the letter uses. A *stroked* ellipse would not be
+ * equivalent: its stroke is a constant width perpendicular to the curve,
+ * whereas the raster predicate insets both radii by a stem. Building it this
+ * way keeps the SVG and the PNGs the same shape.
+ */
+const SVG_SIZE = 100;
+const svgScale = (SVG_SIZE * 0.86) / LAYOUT.width;
+const svgOriginX = (SVG_SIZE - LAYOUT.width * svgScale) / 2;
+const svgOriginY = (SVG_SIZE - svgScale) / 2;
 
-const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="SPILL">
-  <rect width="100" height="100" fill="#000" />
-  <g>
-    <circle cx="50" cy="50" r="${(50 * ((RIM_OUTER + RIM_INNER) / 2) * 0.86).toFixed(2)}" fill="none" stroke="#fff" stroke-width="${(50 * (RIM_OUTER - RIM_INNER) * 0.86).toFixed(2)}" />
-    ${spokes}
-    <circle cx="50" cy="50" r="${(50 * HUB * 0.86).toFixed(2)}" fill="#fff" />
-    <path d="M50 ${(50 + 50 * POINTER_APEX * 0.86).toFixed(2)} L${(50 - 50 * POINTER_HALF * 0.86).toFixed(2)} ${(50 + 50 * POINTER_BASE * 0.86).toFixed(2)} L${(50 + 50 * POINTER_HALF * 0.86).toFixed(2)} ${(50 + 50 * POINTER_BASE * 0.86).toFixed(2)} Z" fill="#fff" />
-  </g>
+const n = (value) => Number(value.toFixed(3));
+const u = (value) => n(value * svgScale);
+
+const shapes = [];
+const clips = [];
+let clipId = 0;
+
+function ringPath(cx, cy, rx, ry) {
+  const ellipse = (a, b) =>
+    `M ${n(cx - a)} ${n(cy)} a ${n(a)} ${n(b)} 0 1 0 ${n(2 * a)} 0 a ${n(a)} ${n(b)} 0 1 0 ${n(-2 * a)} 0 Z`;
+  return `${ellipse(rx, ry)} ${ellipse(rx - u(BOWL), ry - u(BOWL))}`;
+}
+
+/** Clips a bowl to a rectangular region, expressed in multiples of its radii. */
+function clipToRects(cx, cy, rx, ry, rects) {
+  const id = `c${clipId++}`;
+  const body = rects
+    .map(
+      ([x0, y0, x1, y1]) =>
+        `<rect x="${n(cx + x0 * rx)}" y="${n(cy + y0 * ry)}" width="${n((x1 - x0) * rx)}" height="${n((y1 - y0) * ry)}" />`,
+    )
+    .join('');
+  clips.push(`<clipPath id="${id}">${body}</clipPath>`);
+  return id;
+}
+
+for (const { letter, x: offset } of LAYOUT.offsets) {
+  const ox = svgOriginX + offset * svgScale;
+  const oy = svgOriginY;
+  const rect = (x0, y0, x1, y1) =>
+    `<rect x="${n(ox + x0 * svgScale)}" y="${n(oy + y0 * svgScale)}" width="${u(x1 - x0)}" height="${u(y1 - y0)}" fill="#fff" />`;
+
+  if (letter === 'I') shapes.push(rect(0, 0, STEM, 1));
+
+  if (letter === 'L') {
+    shapes.push(rect(0, 0, STEM, 1));
+    shapes.push(rect(0, 1 - STEM, L_FOOT, 1));
+  }
+
+  if (letter === 'P') {
+    shapes.push(rect(0, 0, STEM, 1));
+    const cx = ox + P_RX * svgScale;
+    const cy = oy + P_RY * svgScale;
+    const rx = u(P_RX);
+    const ry = u(P_RY);
+    const id = clipToRects(cx, cy, rx, ry, [[0, -1, 1, 1]]); // right half
+    shapes.push(`<path d="${ringPath(cx, cy, rx, ry)}" fill="#fff" fill-rule="evenodd" clip-path="url(#${id})" />`);
+  }
+
+  if (letter === 'S') {
+    const cx = ox + S_RX * svgScale;
+    const rx = u(S_RX);
+    const ry = u(S_RY);
+    const topY = oy + S_RY * svgScale;
+    const bottomY = oy + (1 - S_RY) * svgScale;
+
+    // Upper bowl: all but the bottom-right quadrant. Lower bowl: the mirror.
+    const topId = clipToRects(cx, topY, rx, ry, [
+      [-1, -1, 0, 1],
+      [0, -1, 1, 0],
+    ]);
+    const bottomId = clipToRects(cx, bottomY, rx, ry, [
+      [0, -1, 1, 1],
+      [-1, 0, 0, 1],
+    ]);
+
+    shapes.push(
+      `<path d="${ringPath(cx, topY, rx, ry)}" fill="#fff" fill-rule="evenodd" clip-path="url(#${topId})" />`,
+      `<path d="${ringPath(cx, bottomY, rx, ry)}" fill="#fff" fill-rule="evenodd" clip-path="url(#${bottomId})" />`,
+    );
+  }
+}
+
+const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SVG_SIZE} ${SVG_SIZE}" role="img" aria-label="${WORD}">
+  <defs>
+    ${clips.join('\n    ')}
+  </defs>
+  <rect width="${SVG_SIZE}" height="${SVG_SIZE}" fill="#000" />
+  ${shapes.join('\n  ')}
 </svg>
 `;
 

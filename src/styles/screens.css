@@ -2,19 +2,40 @@
 
 /* ── splash ────────────────────────────────────────────────────────────────── */
 
+/**
+ * Splash.
+ *
+ * Positioned against the whole screen rather than laid out inside it: the shell
+ * carries safe-area padding, so a `100dvh` box *within* that padding gets pushed
+ * below the optical centre — which is exactly how the wordmark ended up sitting
+ * low on a notched iPhone.
+ *
+ * The wordmark itself is what gets centred, so it lands in the same place as the
+ * iOS launch image and the two read as one continuous screen. The tagline hangs
+ * off it absolutely so it cannot drag the centring off.
+ */
 .splash {
+  position: absolute;
+  inset: 0;
   display: grid;
+  place-content: center;
   place-items: center;
-  gap: var(--space-3);
-  min-height: 100dvh;
   text-align: center;
 }
 
 .splash__mark {
+  position: relative;
   animation: reveal-name 700ms var(--ease-out) both;
 }
 
 .splash__tagline {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  translate: -50% 0;
+  margin-top: var(--space-3);
+  width: max-content;
+  max-width: 90vw;
   font-size: var(--text-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
