@@ -22,7 +22,7 @@ import { adultDare } from '@/data/builders';
  */
 export const adultDares = [
   // ── 1 · flirty, solo ───────────────────────────────────────────────────────
-  adultDare('d18-001', 'Describe your ideal date in enough detail that everyone can picture it.', 1),
+  adultDare('d18-001', 'Describe the perfect night with someone, from the first message to the front door.', 1),
   adultDare('d18-002', 'Give a 30-second pitch for why someone should date you. Be shameless.', 1),
   adultDare('d18-003', 'Describe the type of person you are drawn to without naming a single physical trait.', 1),
   adultDare('d18-004', 'Deliver the smoothest line you know to the room. Full conviction.', 1),
@@ -30,7 +30,7 @@ export const adultDares = [
   adultDare('d18-006', 'Describe what a perfect Sunday with someone you like looks like.', 1),
   adultDare('d18-007', 'Rate your own flirting out of ten and let the group correct you.', 1, { playerMode: 'group', minPlayers: 3 }),
   adultDare('d18-008', 'Act out the exact moment you realised you were into someone.', 1),
-  adultDare('d18-009', 'Give the group your honest, unfiltered opinion on grand romantic gestures.', 1),
+  adultDare('d18-009', 'Tell the group the most romantic thing you have done for someone, and whether it worked.', 1),
   adultDare('d18-010', 'Describe your dream partner as if you are filing a missing persons report.', 1),
   adultDare('d18-011', 'Perform your most dramatic "we need to talk" opening line.', 1),
   adultDare('d18-012', 'Explain your entire dating history using only film genres.', 1),
@@ -40,7 +40,7 @@ export const adultDares = [
   adultDare('d18-016', 'Do an impression of yourself the last time you were genuinely nervous around someone.', 1),
   adultDare('d18-017', 'Describe your love life this year as a film title and a one-line review.', 1),
   adultDare('d18-018', 'Give a completely straight-faced explanation of your worst romantic decision.', 1),
-  adultDare('d18-019', 'Tell the group what you find most attractive about confidence, with an example.', 1),
+  adultDare('d18-019', 'Point at the most confident person here and explain exactly what gives them away.', 1, { needsOther: true, minPlayers: 3 }),
   adultDare('d18-020', 'Perform the most dramatic "it is not you, it is me" speech you can manage.', 1),
 
   // ── 2 · suggestive, solo ───────────────────────────────────────────────────
@@ -61,7 +61,7 @@ export const adultDares = [
   adultDare('d18-035', 'Tell the group what someone would have to do tonight to get your attention.', 2),
   adultDare('d18-036', 'Reenact your worst ever attempt at being seductive.', 2),
   adultDare('d18-037', 'Describe the hottest thing anyone has ever said to you, word for word.', 2),
-  adultDare('d18-038', 'Say the thing you would say to someone if you knew they felt the same way.', 2),
+  adultDare('d18-038', 'Say out loud the exact words you would use to make the first move on someone.', 2),
   adultDare('d18-039', 'Describe the last person who wrecked your composure, without naming them.', 2),
   adultDare('d18-040', 'Tell the group the exact scenario you would never admit to daydreaming about.', 2),
 
@@ -81,7 +81,7 @@ export const adultDares = [
   adultDare('d18-053', 'Describe your hard limits and where exactly the line sits.', 3),
   adultDare('d18-054', 'Tell the group the most experimental thing you have agreed to, and how it went.', 3),
   adultDare('d18-055', 'Describe the sound or the word that gets you instantly, and demonstrate the word.', 3),
-  adultDare('d18-056', 'Give the group a genuinely useful piece of advice from your own experience.', 3),
+  adultDare('d18-056', 'Give the group one piece of advice about sex that you learned the hard way.', 3),
   adultDare('d18-057', 'Describe the most confident you have ever been with someone, and what you did.', 3),
   adultDare('d18-058', 'Say the last thing you thought about someone that you would never repeat.', 3),
   adultDare('d18-059', 'Describe the thing you are secretly very good at, and back up the claim.', 3),

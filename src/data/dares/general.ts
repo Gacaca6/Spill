@@ -9,6 +9,15 @@ import { dare } from '@/data/builders';
  *
  * The best ones are performance or confession — they give the group something to
  * react to, which is what actually generates the next five minutes of the night.
+ *
+ * The test a dare has to pass: **when it is over, can the room tell it happened?**
+ * A performance, a named person, a specific moment, a confession of a fact — all
+ * fine. Asking someone's view on an abstract noun is not; the honest answer is a
+ * definition, nobody can tell whether it was attempted, and it is really a
+ * mediocre truth wearing a dare's clothes.
+ *
+ *   no  — "Tell the group what you find most attractive about confidence."
+ *   yes — "Point at the most confident person here and say what gives them away."
  */
 export const generalDares = [
   // ── performance ────────────────────────────────────────────────────────────
@@ -208,7 +217,7 @@ export const generalDares = [
   dare('d-cru-008', 'Do a dramatic reading of the cheesiest romantic line you can invent.', 'crush', 2),
   dare('d-cru-009', 'Rate your own flirting out of ten and defend the score to the group.', 'crush', 3),
   dare('d-cru-010', 'Act out the exact face you make when someone you like walks in.', 'crush', 3),
-  dare('d-cru-011', 'Give a two-sentence speech on what makes someone genuinely attractive to you.', 'crush', 3),
+  dare('d-cru-011', 'Describe your type out loud, then let the group decide whether your history matches it.', 'crush', 3, { playerMode: 'group', minPlayers: 3 }),
   dare('d-cru-012', 'Pretend the person to your left is your date and give the worst first impression.', 'crush', 3, { needsOther: true, minPlayers: 3 }),
   dare('d-cru-013', 'Describe the last person you were interested in, without anything identifying.', 'crush', 3),
   dare('d-cru-014', 'Act out how you behave when someone you like walks into a room.', 'crush', 3),
@@ -299,7 +308,7 @@ export const generalDares = [
   dare('d-tea-005', 'Let the group ask you one yes-or-no question about your love life.', 'tea', 4, { playerMode: 'group', minPlayers: 3 }),
   dare('d-tea-006', 'Tell everyone the thing you were certain nobody would ask about tonight.', 'tea', 4),
   dare('d-tea-007', 'Tell the group something true about yourself they would never guess.', 'tea', 3, { playerMode: 'group', minPlayers: 3 }),
-  dare('d-tea-008', 'Reveal the most recent thing you were wrong about and refused to admit.', 'tea', 3),
+  dare('d-tea-008', 'Tell the group about the last time you doubled down on something you knew was false.', 'tea', 3),
   dare('d-tea-009', 'Tell the group the last thing you kept quiet to avoid a conversation.', 'tea', 4),
   dare('d-tea-010', 'Say out loud the thing you have judged someone for and never mentioned.', 'tea', 4),
   dare('d-tea-011', 'Tell the group about the last time you were genuinely shocked by someone.', 'tea', 3),

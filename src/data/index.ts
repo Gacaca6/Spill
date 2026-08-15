@@ -64,13 +64,44 @@ export function validateContent(): ContentIssue[] {
     if (!item.text.trim()) issues.push({ id: item.id, problem: 'empty consequence text' });
   }
 
-  // Near-duplicate detection: identical wording once punctuation and case are stripped.
+  // Exact duplicates, once punctuation and case are stripped.
   const normalized = new Map<string, string>();
+  const words = new Map<string, Set<string>>();
+
   for (const prompt of ALL_PROMPTS) {
     const key = prompt.text.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
     const existing = normalized.get(key);
     if (existing) issues.push({ id: prompt.id, problem: `duplicate wording with ${existing}` });
     else normalized.set(key, prompt.id);
+
+    words.set(prompt.id, new Set(key.split(' ').filter((word) => word.length > 3)));
+  }
+
+  /**
+   * Near-duplicates.
+   *
+   * Exact matching misses the ones that actually happen — "your honest opinion
+   * on grand romantic gestures" against "your honest, unfiltered opinion on
+   * grand romantic gestures" is a repeat to a player and identical to nobody.
+   * Comparing significant-word overlap catches those, and 0.8 is high enough
+   * that genuinely different prompts sharing a phrasing pattern stay clear.
+   */
+  const entries = [...words.entries()];
+  for (let i = 0; i < entries.length; i++) {
+    const [idA, setA] = entries[i] as [string, Set<string>];
+    if (setA.size < 4) continue;
+
+    for (let j = i + 1; j < entries.length; j++) {
+      const [idB, setB] = entries[j] as [string, Set<string>];
+      if (setB.size < 4) continue;
+
+      let shared = 0;
+      for (const word of setA) if (setB.has(word)) shared++;
+      const union = setA.size + setB.size - shared;
+      if (union > 0 && shared / union >= 0.8) {
+        issues.push({ id: idB, problem: `near-duplicate of ${idA}` });
+      }
+    }
   }
 
   return issues;
