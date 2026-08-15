@@ -1,0 +1,119 @@
+---
+import { APP_NAME, APP_DESCRIPTION } from '@/config';
+import assets from '@/pwa/assets.json';
+import '@/styles/global.css';
+
+/**
+ * Privacy policy.
+ *
+ * Required by both stores before review, and it has to match the Data Safety /
+ * App Privacy answers exactly. Shipped as a page inside the app rather than
+ * hosted elsewhere so it is covered by the same offline guarantee and cannot
+ * rot at a dead link during review.
+ *
+ * Everything below is a description of what the code actually does. There is a
+ * test asserting the app contains no fetch, socket, remote host or webfont, so
+ * "sends nothing anywhere" is enforced rather than promised.
+ */
+const v = assets.version;
+const updated = '15 August 2026';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Privacy · {APP_NAME}</title>
+    <meta name="description" content={`How ${APP_NAME} handles your data. It does not collect any.`} />
+    <link rel="icon" href={`/favicon.svg?v=${v}`} type="image/svg+xml" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="robots" content="index, follow" />
+  </head>
+  <body>
+    <main class="screen" style="justify-content: flex-start">
+      <header class="topbar">
+        <a class="topbar__back" href="/"><span aria-hidden="true">←</span><span>Back to the game</span></a>
+        <span class="topbar__status"><span>Privacy</span></span>
+      </header>
+
+      <div class="screen__body stack stack--6" style="padding-bottom: 3rem">
+        <div class="stack stack--3">
+          <p class="eyebrow">Last updated {updated}</p>
+          <h1 class="display display--md">We don't collect anything</h1>
+          <p class="lede">
+            {APP_NAME} has no account, no server and no analytics. Nothing you type or say in this game leaves
+            your device, because there is nowhere for it to go.
+          </p>
+        </div>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">What we collect</h2>
+          <p class="consent__body">
+            Nothing. No personal data, no usage data, no identifiers, no advertising IDs, no crash reports,
+            no location. We do not use cookies, and there is no tracking of any kind.
+          </p>
+        </section>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">What stays on your device</h2>
+          <p class="consent__body">
+            So a game survives an accidental refresh, the app saves the current session in your browser's
+            local storage. That save contains only game mechanics: the player names you typed, turn counters,
+            scores, and the id numbers of the prompt cards drawn.
+          </p>
+          <p class="consent__body">
+            <b>Answers are never recorded.</b> What anybody actually says in response to a question is not
+            stored, transmitted or retained anywhere — not on the device, not by us. Saved games expire after
+            12 hours and are deleted when a game finishes. Clearing your browser data removes them
+            immediately.
+          </p>
+        </section>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">What we never ask for</h2>
+          <p class="consent__body">
+            The app requests no permissions: no camera, no microphone, no location, no contacts, no photos,
+            no notifications. It also never asks you for a password, an account, a payment method or access
+            to any of your other apps. If something ever claims to be {APP_NAME} and asks for those, it is
+            not us.
+          </p>
+        </section>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">Network use</h2>
+          <p class="consent__body">
+            The app downloads itself once and then works entirely offline, including in airplane mode. After
+            that first load it makes no network requests at all. There are no third-party services, no
+            content delivery networks, no embedded fonts and no external images.
+          </p>
+        </section>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">Children</h2>
+          <p class="consent__body">
+            {APP_NAME} is for adults and is not directed at children. The 18+ mode is a separate deck behind an
+            age confirmation, and its content is never reachable from the general game modes.
+          </p>
+        </section>
+
+        <section class="stack stack--3">
+          <h2 class="award__title">Changes</h2>
+          <p class="consent__body">
+            If this policy ever changes, the date at the top of this page changes with it. Since the app
+            collects nothing, any change would be to clarify rather than to widen what we do.
+          </p>
+        </section>
+
+        <div class="consent">
+          <p class="consent__title">In short</p>
+          <p class="consent__body">
+            {APP_DESCRIPTION} Nothing you say in it is recorded, and nothing about you is sent anywhere.
+          </p>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

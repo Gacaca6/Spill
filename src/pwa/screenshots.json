@@ -1,0 +1,51 @@
+[
+  {
+    "src": "/screenshots/home-play.png",
+    "sizes": "1080x1920",
+    "type": "image/png",
+    "form_factor": "narrow",
+    "label": "The pitch"
+  },
+  {
+    "src": "/screenshots/home-wide.png",
+    "sizes": "1920x1080",
+    "type": "image/png",
+    "form_factor": "wide",
+    "label": "The pitch"
+  },
+  {
+    "src": "/screenshots/wheel-play.png",
+    "sizes": "1080x1920",
+    "type": "image/png",
+    "form_factor": "narrow",
+    "label": "The wheel"
+  },
+  {
+    "src": "/screenshots/wheel-wide.png",
+    "sizes": "1920x1080",
+    "type": "image/png",
+    "form_factor": "wide",
+    "label": "The wheel"
+  },
+  {
+    "src": "/screenshots/challenge-play.png",
+    "sizes": "1080x1920",
+    "type": "image/png",
+    "form_factor": "narrow",
+    "label": "A card"
+  },
+  {
+    "src": "/screenshots/modes-play.png",
+    "sizes": "1080x1920",
+    "type": "image/png",
+    "form_factor": "narrow",
+    "label": "Five decks"
+  },
+  {
+    "src": "/screenshots/recap-play.png",
+    "sizes": "1080x1920",
+    "type": "image/png",
+    "form_factor": "narrow",
+    "label": "The recap"
+  }
+]

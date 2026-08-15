@@ -39,7 +39,20 @@ function boot(): void {
   app.register('recap', recapScreen);
   app.register('error', errorScreen);
 
-  void app.go('splash');
+  /**
+   * Launcher shortcuts arrive as `?action=`. They skip the splash, because a
+   * shortcut that dumps you on the same brand animation as a cold launch has
+   * done nothing for you.
+   *
+   * The parameter is read before anything else and stripped from the URL, so a
+   * refresh mid-game does not re-trigger it.
+   */
+  const action = new URLSearchParams(location.search).get('action');
+  if (action) history.replaceState(null, '', location.pathname);
+
+  if (action === 'new') void app.go('setup');
+  else if (action === 'howto') void app.go('howto');
+  else void app.go('splash');
 
   // Backgrounding a PWA on mobile can end the process without warning, so the
   // last known good state is written whenever the app leaves the foreground.
@@ -55,11 +68,9 @@ if (document.readyState === 'loading') {
   boot();
 }
 
-/** Offline support. Failure here is silent — the game works either way. */
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
-      /* offline support is an enhancement, not a requirement */
-    });
-  });
-}
+/**
+ * The service worker is registered by an inline script in the document head
+ * rather than from here — see the comment in `layouts/Base.astro`. Registering
+ * from this bundle made the app look worker-less to store scanners, which read
+ * the page long before a module finishes parsing.
+ */

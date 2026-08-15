@@ -22,8 +22,15 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
     },
     {
-      "source": "/(icons|splash)/(.*)",
+      "source": "/(icons|splash|screenshots)/(.*)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" },
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
     },
     {
       "source": "/(.*)",

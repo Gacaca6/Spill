@@ -262,6 +262,8 @@ function encodePng(width, height, pixels) {
 const TARGETS = [
   { file: 'icon-32.png', size: 32, scale: 0.86 },
   { file: 'icon-64.png', size: 64, scale: 0.84 },
+  // Android launcher shortcuts.
+  { file: 'icon-96.png', size: 96, scale: 0.84 },
   // iOS home-screen icons. iOS does not round-crop these, so the wordmark can
   // sit closer to the edge than a maskable icon allows.
   { file: 'apple-touch-icon-152.png', size: 152, scale: 0.78 },

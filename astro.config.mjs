@@ -23,7 +23,16 @@ function serviceWorker() {
    * worker exists. Precaching ~15 full-screen PNGs would bloat the install for
    * assets the worker is never asked for.
    */
-  const SKIP_DIRS = ['splash/'];
+  const SKIP_DIRS = [
+    'splash/',
+    /**
+     * Android trust data must never be served from a cache. A stale
+     * `assetlinks.json` — say, one from before Play re-signed the app — makes
+     * the browser address bar reappear in a shipped TWA, which is the single
+     * most common way these launches go wrong.
+     */
+    '.well-known/',
+  ];
 
   return {
     name: 'spill:service-worker',

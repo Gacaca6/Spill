@@ -83,7 +83,24 @@ self.addEventListener('fetch', (event) => {
           cache.put('/index.html', fresh.clone());
           return fresh;
         } catch {
-          const cached = (await matchPrecache(request)) || (await matchPrecache('/index.html'));
+          /**
+           * Offline fallback, in order of preference:
+           *   1. the exact page
+           *   2. its directory index — clean URLs mean `/privacy` is served from
+           *      `/privacy/index.html`, which the precache stores under its real
+           *      path and which the request URL therefore never matches
+           *   3. the app shell, so any unknown route still opens the game
+           */
+          const url = new URL(request.url);
+          const directoryIndex = url.pathname.endsWith('/')
+            ? `${url.pathname}index.html`
+            : `${url.pathname}/index.html`;
+
+          const cached =
+            (await matchPrecache(request)) ||
+            (await matchPrecache(directoryIndex)) ||
+            (await matchPrecache('/index.html'));
+
           return cached || Response.error();
         }
       })(),

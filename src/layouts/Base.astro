@@ -72,5 +72,76 @@ const v = assets.version;
     </noscript>
 
     <slot />
+
+    {
+      /**
+       * Service worker registration — inline, immediate, production only.
+       *
+       * Registering from the app bundle or on `load` works, but store-readiness
+       * scanners sample the page early and report "no service worker" for an app
+       * that plainly has one. Inline is visible in milliseconds instead of after
+       * the bundle parses, and registration is cheap enough not to block render.
+       *
+       * Astro drops this block entirely from dev builds, so `astro dev` is never
+       * shadowed by a worker while a production preview still registers one and
+       * stays testable offline.
+       */
+      import.meta.env.PROD && (
+        <script is:inline>
+          {`(function () {
+  if (!('serviceWorker' in navigator)) return;
+
+  var updateAccepted = false;
+  var reloading = false;
+
+  function offerUpdate(worker) {
+    if (document.querySelector('.sw-update')) return;
+
+    var bar = document.createElement('div');
+    bar.className = 'sw-update';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML = '<span>New version ready.</span>';
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = 'Reload';
+    button.onclick = function () {
+      updateAccepted = true;
+      bar.remove();
+      if (worker) worker.postMessage('SKIP_WAITING');
+      else location.reload();
+    };
+
+    bar.appendChild(button);
+    document.body.appendChild(bar);
+  }
+
+  navigator.serviceWorker.register('/sw.js').then(function (registration) {
+    function watch(worker) {
+      if (!worker) return;
+      // A controller already present means this is an update, not a first install.
+      if (worker.state === 'installed' && navigator.serviceWorker.controller) return offerUpdate(worker);
+      worker.addEventListener('statechange', function () {
+        if (worker.state === 'installed' && navigator.serviceWorker.controller) offerUpdate(worker);
+      });
+    }
+
+    watch(registration.waiting);
+    registration.addEventListener('updatefound', function () { watch(registration.installing); });
+    setInterval(function () { registration.update().catch(function () {}); }, 3600000);
+  }).catch(function () {});
+
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    // Only after the player accepted. On a first visit clients.claim() fires this
+    // too, and reloading there would double-load the app and wipe the ?action=
+    // parameter a launcher shortcut arrived with.
+    if (!updateAccepted || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+})();`}
+        </script>
+      )
+    }
   </body>
 </html>
