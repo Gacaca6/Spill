@@ -330,7 +330,7 @@ export function introScreen(app: App): ScreenView {
 
   const rules: Array<[string, string]> = [
     ['01', 'Nobody gets picked twice before everyone plays.'],
-    ['02', 'No same challenge type twice in a row.'],
+    ['02', 'Truth or dare is assigned. You never know which.'],
     ['03', 'You can always say nope.'],
     ['04', 'But nope has consequences.'],
   ];

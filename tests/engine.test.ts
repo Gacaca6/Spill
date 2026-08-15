@@ -87,34 +87,65 @@ describe('player selection fairness', () => {
   });
 });
 
-describe('challenge alternation', () => {
-  it('never gives a player the same challenge type twice in a row', () => {
-    for (let seed = 1; seed <= 25; seed++) {
+describe('challenge type selection', () => {
+  /** Each player's sequence of challenge types, in order. */
+  function sequences(engine: GameEngine) {
+    const byPlayer = new Map<string, ChallengeType[]>();
+    for (const turn of engine.state.history) {
+      const list = byPlayer.get(turn.playerId) ?? [];
+      list.push(turn.type);
+      byPlayer.set(turn.playerId, list);
+    }
+    return [...byPlayer.values()];
+  }
+
+  it('never gives a player the same type three times in a row', () => {
+    for (let seed = 1; seed <= 40; seed++) {
       const engine = makeEngine(['A', 'B', 'C', 'D'], 'chaos', seed);
-      playTurns(engine, 40);
+      playTurns(engine, 60);
 
-      const byPlayer = new Map<string, ChallengeType[]>();
-      for (const turn of engine.state.history) {
-        const list = byPlayer.get(turn.playerId) ?? [];
-        list.push(turn.type);
-        byPlayer.set(turn.playerId, list);
-      }
-
-      for (const types of byPlayer.values()) {
-        for (let i = 1; i < types.length; i++) expect(types[i]).not.toBe(types[i - 1]);
+      for (const types of sequences(engine)) {
+        for (let i = 2; i < types.length; i++) {
+          const run = types[i] === types[i - 1] && types[i] === types[i - 2];
+          expect(run, `three ${types[i]}s in a row`).toBe(false);
+        }
       }
     }
   });
 
-  it('strictly alternates truth and dare for an individual player', () => {
-    const engine = makeEngine(['A', 'B']);
-    playTurns(engine, 12);
+  it('is not predictable from the previous card', () => {
+    /**
+     * The point of the whole rule. If a repeat never happened, the table could
+     * call every card after a player's first turn and the reveal would be dead.
+     */
+    let repeats = 0;
+    let opportunities = 0;
 
-    const forA = engine.state.history.filter((turn) => turn.playerId === engine.state.players[0]!.id).map((t) => t.type);
-    const first = forA[0]!;
-    forA.forEach((type, index) => {
-      expect(type).toBe(index % 2 === 0 ? first : first === 'truth' ? 'dare' : 'truth');
-    });
+    for (let seed = 1; seed <= 40; seed++) {
+      const engine = makeEngine(['A', 'B', 'C', 'D'], 'chaos', seed);
+      playTurns(engine, 60);
+
+      for (const types of sequences(engine)) {
+        for (let i = 1; i < types.length; i++) {
+          opportunities++;
+          if (types[i] === types[i - 1]) repeats++;
+        }
+      }
+    }
+
+    const rate = repeats / opportunities;
+    expect(rate).toBeGreaterThan(0.1);
+    expect(rate).toBeLessThan(0.45);
+  });
+
+  it('keeps truths and dares roughly balanced over a long night', () => {
+    const engine = makeEngine(['A', 'B', 'C', 'D'], 'chaos', 9);
+    playTurns(engine, 400);
+
+    const truths = engine.state.history.filter((turn) => turn.type === 'truth').length;
+    const share = truths / engine.state.history.length;
+    expect(share).toBeGreaterThan(0.35);
+    expect(share).toBeLessThan(0.65);
   });
 
   it('preserves alternation when mercy replaces the challenge', () => {

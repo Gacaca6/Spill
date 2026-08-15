@@ -29,6 +29,17 @@ import { defaultRandom, pick, type Rng } from '@/utils/random';
  * can later run against state synchronised from a server.
  */
 
+/**
+ * How strongly the engine leans toward switching challenge type, and the point
+ * at which it stops leaning and simply switches.
+ *
+ * At 0.72 a repeat lands a little over a quarter of the time — often enough
+ * that nobody at the table can call the next card, rare enough that the night
+ * does not turn into a run of one type.
+ */
+const SWITCH_BIAS = 0.72;
+const MAX_SAME_TYPE_RUN = 2;
+
 /** Chaos Score weighting. Rewards playing along; refusing costs a little. */
 const SCORE = {
   completed: 2,
@@ -182,15 +193,29 @@ export class GameEngine {
   }
 
   /**
-   * The alternation rule: nobody gets the same challenge type twice in a row.
-   * The first turn of a player's night is a coin flip.
+   * Which type this player gets.
+   *
+   * Strict alternation was the original rule and it made the game predictable:
+   * after a player's first turn, every card they would ever get was known to
+   * the whole table, so "TRUTH." stopped being a reveal and the room settled
+   * into a repeating pattern.
+   *
+   * So the rule keeps its intent — no dull runs, no gaming your way into an
+   * all-truths night — without the certainty. Switching is strongly favoured but
+   * never guaranteed, and the same type three times running is impossible. From
+   * a player's seat the next card is genuinely unknown, while the long run still
+   * comes out near an even split.
    */
   challengeTypeFor(playerId: string): ChallengeType {
     const player = this.getPlayer(playerId);
     if (!player || player.lastChallengeType === null) {
       return this.rng() < 0.5 ? 'truth' : 'dare';
     }
-    return player.lastChallengeType === 'truth' ? 'dare' : 'truth';
+
+    const opposite: ChallengeType = player.lastChallengeType === 'truth' ? 'dare' : 'truth';
+    if (player.sameTypeStreak >= MAX_SAME_TYPE_RUN) return opposite;
+
+    return this.rng() < SWITCH_BIAS ? opposite : player.lastChallengeType;
   }
 
   /** Intensity band for a given player's next draw, including any Double Down boost. */
@@ -400,6 +425,9 @@ export class GameEngine {
 
     if (player) {
       player.turnsPlayed += 1;
+      // Streak first — it is measured against the *previous* type, which the
+      // next line is about to overwrite.
+      player.sameTypeStreak = player.lastChallengeType === turn.type ? player.sameTypeStreak + 1 : 1;
       player.lastChallengeType = turn.type;
       if (turn.type === 'truth') player.truthsReceived += 1;
       else player.daresReceived += 1;
@@ -518,6 +546,7 @@ function createPlayer(id: string, name: string): Player {
     validVotes: 0,
     capVotes: 0,
     lastChallengeType: null,
+    sameTypeStreak: 0,
     chaosScore: 0,
     pendingIntensityBoost: 0,
   };

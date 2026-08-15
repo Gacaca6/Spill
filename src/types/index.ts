@@ -75,6 +75,8 @@ export interface Player {
   validVotes: number;
   capVotes: number;
   lastChallengeType: ChallengeType | null;
+  /** How many times in a row this player has had `lastChallengeType`. */
+  sameTypeStreak: number;
   chaosScore: number;
   /** Set by Double Down — raises the intensity band for this player's next turn only. */
   pendingIntensityBoost: number;

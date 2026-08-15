@@ -196,7 +196,7 @@ export function homeScreen(app: App): ScreenView {
 export function howToScreen(app: App): ScreenView {
   const rules: Array<[string, string, string]> = [
     ['01', 'The wheel picks. Not you.', 'Nobody gets picked twice until everyone has had a turn.'],
-    ['02', 'Truth or dare is assigned.', 'You never get the same type twice in a row. No choosing your way out.'],
+    ['02', 'Truth or dare is assigned.', 'You do not choose it and you cannot predict it. Never three of the same in a row, but two happens.'],
     ['03', 'You can always say nope.', 'Refusing is allowed, always. It just costs you a consequence.'],
     ['04', 'The group can show mercy.', 'Ask the room. If they vote yes, you get a different challenge.'],
     ['05', 'Or double down.', 'Dodge the consequence and your next challenge comes back harder.'],

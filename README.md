@@ -68,9 +68,12 @@ These are enforced structurally and covered by tests, not left to chance:
 - **Nobody is picked twice until everybody has played.** A round is a shuffled queue drained
   one player at a time, so repetition inside a round is impossible by construction. A new
   round also never opens with the player who closed the last one.
-- **No player gets the same challenge type twice in a row.** Truth alternates with dare,
-  always. The type is assigned, never offered as a choice — so the rule reads as intentional
-  rather than as something being withheld.
+- **The challenge type is assigned, and it is not predictable.** Switching is strongly
+  favoured (~72%) and the same type three times running is impossible, but a repeat lands
+  about **22%** of the time. Strict alternation was the original rule and it made the game
+  dead: after a player's first turn the whole table could name every card they would ever
+  get, so the reveal carried no information and the room fell into a repeating pattern.
+  Unpredictable per turn, near an even split over a night.
 - **No prompt repeats while unused prompts remain.** When a pool is genuinely exhausted it
   reopens rather than failing.
 - **The mode's intensity ceiling is a hard filter.** Chill can never serve a 4, even when the
