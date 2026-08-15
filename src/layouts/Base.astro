@@ -1,6 +1,6 @@
 ---
 import { APP_NAME, APP_TAGLINE, APP_DESCRIPTION } from '@/config';
-import launchScreens from '@/pwa/launch-screens.json';
+import assets from '@/pwa/assets.json';
 
 interface Props {
   title?: string;
@@ -8,6 +8,13 @@ interface Props {
 
 const { title } = Astro.props;
 const pageTitle = title ? `${title} · ${APP_NAME}` : `${APP_NAME} — ${APP_TAGLINE}`;
+
+/**
+ * Home-screen icons sit at stable paths, so a cached copy would otherwise be
+ * handed back to Safari at the exact moment someone re-adds the app — quietly
+ * restoring the old icon. The fingerprint makes a changed icon a changed URL.
+ */
+const v = assets.version;
 ---
 
 <!doctype html>
@@ -21,17 +28,22 @@ const pageTitle = title ? `${title} · ${APP_NAME}` : `${APP_NAME} — ${APP_TAG
     <meta name="description" content={APP_DESCRIPTION} />
 
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180.png" />
-    <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png" />
+    <link rel="icon" href={`/favicon.svg?v=${v}`} type="image/svg+xml" />
+    <link rel="icon" href={`/favicon.ico?v=${v}`} sizes="32x32" />
+    <link rel="apple-touch-icon" sizes="180x180" href={`/icons/apple-touch-icon-180.png?v=${v}`} />
+    <link rel="apple-touch-icon" sizes="167x167" href={`/icons/apple-touch-icon-167.png?v=${v}`} />
+    <link rel="apple-touch-icon" sizes="152x152" href={`/icons/apple-touch-icon-152.png?v=${v}`} />
 
     <!-- Matches the palette in both contexts so the browser chrome never flashes.
          The dark value is listed first so it also serves as the default. -->
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="color-scheme" content="dark light" />
+
+    <!-- Read at runtime to spot an installed copy whose home-screen icon predates
+         the current one. Exposed as a meta tag rather than imported, so the
+         device table in assets.json stays out of the JS bundle. -->
+    <meta name="spill:icon-version" content={v} />
 
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -41,8 +53,8 @@ const pageTitle = title ? `${title} · ${APP_NAME}` : `${APP_NAME} — ${APP_TAG
 
     {/* iOS launch images. Without an exact match for the device, Safari shows a
         white flash on launch, which is brutal against a pure-black app. */}
-    {launchScreens.map((entry) => (
-      <link rel="apple-touch-startup-image" href={entry.href} media={entry.media} />
+    {assets.launchScreens.map((entry) => (
+      <link rel="apple-touch-startup-image" href={`${entry.href}?v=${v}`} media={entry.media} />
     ))}
 
     <meta property="og:type" content="website" />

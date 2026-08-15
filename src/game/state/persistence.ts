@@ -121,3 +121,26 @@ export function savePreferences(preferences: Preferences): void {
     /* preferences are a nicety, not a requirement */
   }
 }
+
+/**
+ * Home-screen icon freshness.
+ *
+ * iOS copies the icon at the moment someone adds the app and never looks again
+ * — there is no API to update it. The most the web can do is notice that an
+ * installed copy predates the current icon and say so.
+ */
+export function installedIconVersion(): string | null {
+  try {
+    return storage()?.getItem(STORAGE_KEYS.icon) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function rememberIconVersion(version: string): void {
+  try {
+    storage()?.setItem(STORAGE_KEYS.icon, version);
+  } catch {
+    /* nothing depends on this beyond the notice */
+  }
+}

@@ -3,8 +3,64 @@ import { APP_NAME, APP_TAGLINE, TIMING } from '@/config';
 import { h } from '@/ui/dom';
 import { beat } from '@/ui/motion';
 import { button, consentNote, screen, topbar } from '@/ui/components/ui';
-import { loadSession } from '@/game/state/persistence';
+import { installedIconVersion, loadSession, rememberIconVersion } from '@/game/state/persistence';
 import { MODES } from '@/data/categories/modes';
+
+/** True when running as an installed app rather than a browser tab. */
+function isInstalled(): boolean {
+  if (typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches) return true;
+  // iOS predates the display-mode media query and uses its own flag.
+  return (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+/**
+ * A one-time nudge for an installed copy whose icon is out of date.
+ *
+ * iOS bakes the home-screen icon in when the app is added and offers no way to
+ * refresh it — not through the manifest, not through the service worker. So the
+ * honest fix is to detect the mismatch and tell the player the one thing that
+ * does work.
+ *
+ * If nothing has been recorded yet we cannot know which icon they installed
+ * with, so the current version is stored silently rather than guessing and
+ * showing a notice that might be wrong.
+ */
+function iconUpdateNotice(app: App): HTMLElement | null {
+  const current = document.querySelector<HTMLMetaElement>('meta[name="spill:icon-version"]')?.content;
+  if (!current || !isInstalled()) return null;
+
+  const installed = installedIconVersion();
+  if (!installed) {
+    rememberIconVersion(current);
+    return null;
+  }
+  if (installed === current) return null;
+
+  const notice = h(
+    'div',
+    { class: 'notice', role: 'status' },
+    h('div', { class: 'stack stack--2' },
+      h('p', { class: 'notice__title', text: 'New icon' }),
+      h('p', {
+        class: 'notice__body',
+        text: 'Remove SPILL from your home screen and add it again to pick it up. iPhone only copies the icon once.',
+      }),
+    ),
+    h('button', {
+      class: 'icon-btn',
+      type: 'button',
+      'aria-label': 'Dismiss',
+      text: '×',
+      onClick: () => {
+        rememberIconVersion(current);
+        notice.remove();
+        app.announce('Dismissed');
+      },
+    }),
+  );
+
+  return notice;
+}
 
 /**
  * Splash.
@@ -123,6 +179,7 @@ export function homeScreen(app: App): ScreenView {
     h(
       'div',
       { class: 'screen__actions' },
+      iconUpdateNotice(app),
       button({
         label: 'Start a game',
         variant: 'primary',

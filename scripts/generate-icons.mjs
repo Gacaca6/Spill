@@ -8,6 +8,7 @@
  */
 
 import { deflateSync } from 'node:zlib';
+import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -280,8 +281,20 @@ const TARGETS = [
 
 mkdirSync(ICON_DIR, { recursive: true });
 
+/**
+ * Fingerprint of the icon set.
+ *
+ * Home-screen icons live at stable paths, so a browser that has cached the old
+ * bytes will keep serving them — including to Safari at the moment someone
+ * re-adds the app, which would silently reinstate the previous icon. Stamping
+ * this onto the icon URLs makes a changed icon a changed URL.
+ */
+const iconHash = createHash('sha256');
+
 for (const { file, size, scale } of TARGETS) {
-  writeFileSync(path.join(ICON_DIR, file), encodePng(size, size, render(size, scale)));
+  const png = encodePng(size, size, render(size, scale));
+  iconHash.update(png);
+  writeFileSync(path.join(ICON_DIR, file), png);
 }
 
 /**
@@ -339,9 +352,15 @@ for (const { w, h, r } of LAUNCH_SCREENS) {
   });
 }
 
-// Emitted as data so the layout can render the link tags without duplicating
-// this device table in two places.
-writeFileSync(path.join(ROOT, 'src', 'pwa', 'launch-screens.json'), JSON.stringify(launchLinks, null, 2), 'utf8');
+const ICON_VERSION = iconHash.digest('hex').slice(0, 10);
+
+// Emitted as data so the layout and the manifest can render icon URLs without
+// duplicating this device table, or the version, in three places.
+writeFileSync(
+  path.join(ROOT, 'src', 'pwa', 'assets.json'),
+  JSON.stringify({ version: ICON_VERSION, launchScreens: launchLinks }, null, 2),
+  'utf8',
+);
 
 /** A real .ico (a PNG in an ICO wrapper) for browsers and tools that insist on one. */
 const icoPng = encodePng(32, 32, render(32, 0.92));
@@ -458,5 +477,5 @@ const favicon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SVG_SIZE
 writeFileSync(path.join(ROOT, 'public', 'favicon.svg'), favicon, 'utf8');
 
 console.log(
-  `icons: ${TARGETS.length} PNGs, ${LAUNCH_SCREENS.length} launch images, favicon.svg + favicon.ico written to public/`,
+  `icons: ${TARGETS.length} PNGs, ${LAUNCH_SCREENS.length} launch images, favicon.svg + favicon.ico written to public/ (v${ICON_VERSION})`,
 );

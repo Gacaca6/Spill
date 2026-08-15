@@ -59,7 +59,10 @@ function serviceWorker() {
           // Keep very large assets out of the precache; they can be runtime-cached.
           if (info.size > 2_000_000) continue;
 
-          hash.update(rel).update(String(info.size));
+          // Hash contents, not size. Icons live at stable paths and can change
+          // without changing length — which would leave the worker version
+          // identical and keep the old icon cached indefinitely.
+          hash.update(rel).update(await readFile(file));
           manifest.push('/' + rel);
         }
 

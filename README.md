@@ -140,6 +140,32 @@ start asking.
 
 ---
 
+## Home-screen icons
+
+**iOS copies the icon once, when the app is added, and never looks again.** There is no API
+that changes it afterwards — not the manifest, not the service worker, not a new deploy.
+Anyone already carrying an old icon has to remove the app and add it again. That is a
+platform limitation, not a bug to be fixed here.
+
+What the code does do:
+
+- **Icon URLs carry a `?v=` fingerprint** derived from the icon bytes themselves. Without it,
+  Safari can serve a week-old cached PNG at the exact moment someone re-adds the app —
+  silently restoring the icon they were trying to replace. A changed icon is now a changed
+  URL.
+- **The service worker matches with `ignoreSearch`**, since the page requests icons with the
+  fingerprint but the precache stores them at their bare path. Without this they miss the
+  cache offline.
+- **An installed copy running an outdated icon shows a one-time dismissible notice** telling
+  the player to re-add. If nothing has been recorded yet the current version is stored
+  silently, because there is no way to know which icon an existing install actually has, and
+  a wrong notice is worse than none.
+
+The service worker version hashes file *contents* rather than sizes, so an icon that changes
+without changing length still invalidates the cache.
+
+---
+
 ## Renaming it
 
 `APP_NAME` and `APP_TAGLINE` live in [`src/config.ts`](src/config.ts) and nowhere else. The

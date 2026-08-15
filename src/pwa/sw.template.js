@@ -53,9 +53,13 @@ self.addEventListener('message', (event) => {
  * which carry no `Origin` header. A module script requested by the page *does*
  * send one — so without this, `<script type="module">` misses the cache and the
  * app is a blank screen offline, while stylesheets (no Origin) still work.
+ *
+ * `ignoreSearch` covers the icons, which are requested with a `?v=` fingerprint
+ * but precached at their bare path. It is safe across the board here because
+ * every other asset is content-hashed in its filename and carries no query.
  */
 function matchPrecache(request) {
-  return caches.match(request, { ignoreVary: true });
+  return caches.match(request, { ignoreVary: true, ignoreSearch: true });
 }
 
 /**

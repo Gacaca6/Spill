@@ -16,6 +16,7 @@ export const STATE_VERSION = 1;
 export const STORAGE_KEYS = {
   session: 'spill:session:v1',
   prefs: 'spill:prefs:v1',
+  icon: 'spill:icon:v1',
 } as const;
 
 export const LIMITS = {
